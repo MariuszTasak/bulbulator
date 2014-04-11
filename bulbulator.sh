@@ -27,15 +27,6 @@ illegal_char_replace()
 	echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
 }
 
-. ./bulbulator.config.sh
-export SETUP_DIR=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
-
-# e.g http://eset.eset_testing.testing.nexwai.pl/
-export DOMAIN=`illegal_char_replace $BRANCH '-'`
-export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
-
-export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
-
 script_dir=$(cd `dirname $0` && pwd)
 if [ ! -f $script_dir/bulbulator.config.sh ]; then
 	echo 'Missing configuration file (bulbulator.config.sh).'
@@ -109,10 +100,20 @@ if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
 fi
 
+. ./bulbulator.config.sh
+export SETUP_DIR=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+
+# e.g http://eset.eset_testing.testing.nexwai.pl/
+export DOMAIN=`illegal_char_replace $BRANCH '-'`
+export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
+
+export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
+
+
 
 # exit if environment exist
 if [ -d "$SETUP_DIR" ]; then
-    print_msg "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
+    echo "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
     exit 1
 fi
 
