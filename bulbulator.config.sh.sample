@@ -6,10 +6,10 @@
 # for database user and used directories).
 ################################################################################
 
-export MYSQL_USER="" # e.g. mrogacki
+export MYSQL_USER="" 
 export MYSQL_PASSWORD=""
-export MYSQL_DB_PREFIX="" # e.g. mrogacki_
-export MYSQL_DB_HOST="" # e.g. 192.168.1.222
+export MYSQL_DB_PREFIX="bulbulator_" # e.g. mrogacki_
+export MYSQL_DB_HOST=""  
 
 export BASE_SETUP_DIR_TO_CHECK="/var/tmp/"
 export BASE_SETUP_DIR=$BASE_SETUP_DIR_TO_CHECK"testing/"
