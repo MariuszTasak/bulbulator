@@ -77,22 +77,22 @@ while test $# -gt 0; do
 done
 
 if [ -z "$REPOSITORY_URL" ]; then
-    echo "Repository url param is missing"
+    echo "(-r) Repository url param is missing"
     show_usage
     exit 1
 fi
 if [ -z "$BRANCH" ]; then
-    echo "Branch param is missing"
+    echo "(-b) Branch param is missing"
     show_usage
     exit 1
 fi
 if [ -z "$ENV_NAME" ]; then
-    echo "Env name param is missing"
+    echo "(-e [prep|prod]) Env name param is missing"
     show_usage
     exit 1
 fi
 if [ -z "$WEBSITE" ]; then
-    echo "Website param is missing"
+    echo "(-w) Website param is missing"
     show_usage
     exit 1
 fi
@@ -134,7 +134,7 @@ fi
 echo "Step 0: Download repository $REPOSITORY_URL to $SETUP_DIR"
 
 ## Cache repo!!
-TMP_REPO=/tmp/.$REPOSITORY_URL
+TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
 if [ ! -d "$TMP_REPO" ]; then
     git clone $REPOSITORY_URL $TMP_REPO
 fi
