@@ -1,0 +1,16 @@
+#!/bin/bash
+
+################################################################################
+# Please create a config file from this sample. It should be named
+# bulbulator.config.sh and should contains correct credentilas (note permisions
+# for database user and used directories).
+################################################################################
+
+export MYSQL_USER="" # e.g. mrogacki
+export MYSQL_PASSWORD=""
+export MYSQL_DB_PREFIX="" # e.g. mrogacki_
+export MYSQL_DB_HOST="" # e.g. 192.168.1.222
+
+export BASE_SETUP_DIR_TO_CHECK="/var/tmp/"
+export BASE_SETUP_DIR=$BASE_SETUP_DIR_TO_CHECK"testing/"
+export MEDIA_DIR="/var/www/media/"
