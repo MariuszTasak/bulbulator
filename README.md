@@ -19,5 +19,3 @@ with such layout one could have many config files and run
 `. eset_demo && bulbulator.sh` would just do the job
 but it should be still possible to call
 `bulbulator.sh -r -b ...`
-
-## Cache repo
