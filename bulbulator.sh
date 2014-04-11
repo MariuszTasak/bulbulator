@@ -28,15 +28,15 @@ illegal_char_replace()
 }
 
 script_dir=$(cd `dirname $0` && pwd)
-if [ ! -f $script_dir/bulbulator.config.sh ]; then
-	echo 'Missing configuration file (bulbulator.config.sh).'
-	echo 'Please review a bulbulator.config.sh.sample for futher informations.'
-	show_usage
-	exit 1
-fi
+#if [ ! -f $script_dir/bulbulator.config.sh ]; then
+#	echo 'Missing configuration file (bulbulator.config.sh).'
+#	echo 'Please review a bulbulator.config.sh.sample for futher informations.'
+#	show_usage
+#	exit 1
+#fi
 
 
-. $script_dir/bulbulator.config.sh
+# . $script_dir/bulbulator.config.sh
 
 while test $# -gt 0; do
     case "$1" in
@@ -100,7 +100,6 @@ if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
 fi
 
-. ./bulbulator.config.sh
 export SETUP_DIR=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
 
 # e.g http://eset.eset_testing.testing.nexwai.pl/
