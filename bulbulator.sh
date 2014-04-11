@@ -113,6 +113,7 @@ export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 # exit if environment exist
 if [ -d "$SETUP_DIR" ]; then
     echo "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
+    echo -e "try \n\t\trm -rf $SETUP_DIR"
     exit 1
 fi
 
@@ -132,9 +133,28 @@ fi
 
 echo "Step 0: Download repository $REPOSITORY_URL to $SETUP_DIR"
 
-git clone $REPOSITORY_URL $SETUP_DIR || exit 1;
+## Cache repo!!
+TMP_REPO=/tmp/.$REPOSITORY_URL
+if [ ! -d "$TMP_REPO" ]; then
+    git clone $REPOSITORY_URL $TMP_REPO
+fi
+
+cd $TMP_REPO
+# http://stackoverflow.com/questions/67699/how-do-i-clone-all-remote-branches-with-git
+for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
+    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
+done
+git checkout $BRANCH
+git pull ## update only THE branch in cached repo
+## END cache repo
+
+git clone $TMP_REPO $SETUP_DIR || exit 1;
+
 cd $SETUP_DIR
+for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
+    git branch --track ${branch##*/} $branch
+done
 
 echo "Step: checkout to branch - $BRANCH"
-git checkout -b $BRANCH origin/$BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
+git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 ./shell/bulbulator/bulbulate.sh
