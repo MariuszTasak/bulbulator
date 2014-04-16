@@ -126,7 +126,7 @@ if [ ! -d "$BASE_SETUP_DIR" ]; then
         echo Directory created
     # print error if we do not have permissions
     else
-        echo "ERROR!  Permission denied: $BASE_SETUP_DIR_TO_CHECK"
+        echo "ERROR!  Permission denied for BASE_SETUP_DIR_TO_CHECK=$BASE_SETUP_DIR_TO_CHECK"
         exit 1
     fi
 fi
@@ -157,4 +157,11 @@ done
 
 echo "Step: checkout to branch - $BRANCH"
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
-./shell/bulbulator/bulbulate.sh
+if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
+	echo "";
+	echo "ERROR! Branch you're trying to get is not compatibile with new version of bulbulator
+please merge with latest main branch."	
+	exit 1;    
+fi
+
+./shell/bulbulator/bulbulate.sh 
