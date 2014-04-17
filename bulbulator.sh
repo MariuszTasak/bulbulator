@@ -4,8 +4,15 @@ echo "
 
 Usage:
 
-Get Bulbulator from latest repo.
-bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN]
+1. Get Bulbulator from latest repo.
+
+2. run bulbulator with required ENV variables set up
+
+   2.1 Either from file
+   . .bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN]
+
+   2.2 or via command line
+   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl
 
 It will be installed in $BASE_SETUP_DIR (check bulbulator.config.sh.sample) and be accessible
 via http://WEBSITE.BRANCH.SUBDOMAIN (ie eset.s30.testing.nexwai.pl)
