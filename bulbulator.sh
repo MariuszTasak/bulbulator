@@ -147,6 +147,7 @@ if [ ! -d "$TMP_REPO" ]; then
 fi
 
 cd $TMP_REPO
+git fetch --all
 # http://stackoverflow.com/questions/67699/how-do-i-clone-all-remote-branches-with-git
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
     git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
@@ -158,6 +159,7 @@ git pull ## update only THE branch in cached repo
 git clone $TMP_REPO $SETUP_DIR || exit 1;
 
 cd $SETUP_DIR
+git fetch --all
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
     git branch --track ${branch##*/} $branch
 done
