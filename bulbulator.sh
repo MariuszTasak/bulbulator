@@ -9,12 +9,12 @@ Usage:
 2. run bulbulator with required ENV variables set up
 
    2.1 Either from file
-   . .bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN]
+   . etc/bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN] [--with-db-drop]
 
    2.2 or via command line
-   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl
+   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl --with-db-drop
 
-It will be installed in $BASE_SETUP_DIR (check bulbulator.config.sh.sample) and be accessible
+It will be installed in $BASE_SETUP_DIR (check etc/bulbulator.config.sh.sample) and be accessible
 via http://WEBSITE.BRANCH.SUBDOMAIN (ie eset.s30.testing.nexwai.pl)
 
 where
@@ -28,22 +28,32 @@ where
 "
 }
 
+print_msg()
+{
+    echo -e "\n----------------------------------------------------------------------"
+    echo -e $1
+    echo -e "----------------------------------------------------------------------\n"
+}
 
 illegal_char_replace()
 {
 	echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
 }
 
+get_current_timestamp()
+{
+    echo `date +%s`
+}
+
 script_dir=$(cd `dirname $0` && pwd)
-#if [ ! -f $script_dir/bulbulator.config.sh ]; then
-#	echo 'Missing configuration file (bulbulator.config.sh).'
-#	echo 'Please review a bulbulator.config.sh.sample for futher informations.'
+#if [ ! -f $script_dir/etc/bulbulator.config.sh ]; then
+#	echo 'Missing configuration file (etc/bulbulator.config.sh).'
+#	echo 'Please review a etc/bulbulator.config.sh.sample for futher informations.'
 #	show_usage
 #	exit 1
 #fi
 
-
-# . $script_dir/bulbulator.config.sh
+# . $script_dir/etc/bulbulator.config.sh
 
 while test $# -gt 0; do
     case "$1" in
@@ -77,11 +87,26 @@ while test $# -gt 0; do
             export SUB_DOMAIN=$1
             shift
             ;;
+        --with-db-drop)
+            shift
+            export DROP_DB=true
+            ;;
         *)
             break
             ;;
     esac
 done
+
+#echo
+#echo "--- VARS ---"
+#echo $REPOSITORY_URL
+#echo $BRANCH
+#echo $COMMIT_HASH
+#echo $ENV_NAME
+#echo $WEBSITE
+#echo $SUB_DOMAIN
+#echo $DROP_DB
+#exit
 
 if [ -z "$REPOSITORY_URL" ]; then
     echo "(-r) Repository url param is missing"
@@ -107,7 +132,8 @@ if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
 fi
 
-export SETUP_DIR=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+export SETUP_DIR_LINK=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
 # e.g http://eset.eset_testing.testing.nexwai.pl/
 export DOMAIN=`illegal_char_replace $BRANCH '-'`
@@ -115,14 +141,12 @@ export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
 
 export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 
-
-
 # exit if environment exist
-if [ -d "$SETUP_DIR" ]; then
-    echo "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
-    echo -e "try \n\t\trm -rf $SETUP_DIR"
-    exit 1
-fi
+#if [ -d "$SETUP_DIR" ]; then
+#    echo "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
+#    echo -e "try \n\t\trm -rf $SETUP_DIR"
+#    exit 1
+#fi
 
 # create base setup dir if not exist e.g /var/www/testing/
 if [ ! -d "$BASE_SETUP_DIR" ]; then
@@ -136,6 +160,11 @@ if [ ! -d "$BASE_SETUP_DIR" ]; then
         echo "ERROR!  Permission denied for BASE_SETUP_DIR_TO_CHECK=$BASE_SETUP_DIR_TO_CHECK"
         exit 1
     fi
+fi
+
+if [ -a "$SETUP_DIR" ] && [ ! -w "$SETUP_DIR" ]; then
+    echo "ERROR!  Permission denied for destination dir: $SETUP_DIR"
+    exit 1
 fi
 
 echo "Step 0: Download repository $REPOSITORY_URL to $SETUP_DIR"
@@ -155,11 +184,13 @@ git checkout $BRANCH
 git pull ## update only THE branch in cached repo
 ## END cache repo
 
-git clone $TMP_REPO $SETUP_DIR || exit 1;
+if [ ! -d "$SETUP_DIR" ]; then
+    git clone $TMP_REPO $SETUP_DIR || exit 1;
+fi
 
 cd $SETUP_DIR
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
-    git branch --track ${branch##*/} $branch
+    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
 done
 
 echo "Step: checkout to branch - $BRANCH"

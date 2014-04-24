@@ -8,8 +8,8 @@
 
 export MYSQL_USER="" 
 export MYSQL_PASSWORD=""
-export MYSQL_DB_PREFIX="bulbulator_" # e.g. mrogacki_
-export MYSQL_DB_HOST=""  
+export MYSQL_DB_PREFIX="bulbulator_"
+export MYSQL_DB_HOST=""
 
 export BASE_SETUP_DIR_TO_CHECK="/var/tmp/"
 export BASE_SETUP_DIR=$BASE_SETUP_DIR_TO_CHECK"testing/"
