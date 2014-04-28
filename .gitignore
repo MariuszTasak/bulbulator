@@ -1,1 +1,5 @@
 .idea
+*.swp
+*.swo
+etc/*
+!etc/bulbulator.config.sh.sample
