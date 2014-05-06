@@ -9,12 +9,12 @@ Usage:
 2. run bulbulator with required ENV variables set up
 
    2.1 Either from file
-   . .bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN]
+   . etc/bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN] [--with-db-drop]
 
    2.2 or via command line
-   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl
+   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl --with-db-drop
 
-It will be installed in $BASE_SETUP_DIR (check bulbulator.config.sh.sample) and be accessible
+It will be installed in $BASE_SETUP_DIR (check etc/bulbulator.config.sh.sample) and be accessible
 via http://WEBSITE.BRANCH.SUBDOMAIN (ie eset.s30.testing.nexwai.pl)
 
 where
@@ -28,22 +28,32 @@ where
 "
 }
 
+print_msg()
+{
+    echo -e "\n----------------------------------------------------------------------"
+    echo -e $1
+    echo -e "----------------------------------------------------------------------\n"
+}
 
 illegal_char_replace()
 {
 	echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
 }
 
+get_current_timestamp()
+{
+    echo `date +%s`
+}
+
 script_dir=$(cd `dirname $0` && pwd)
-#if [ ! -f $script_dir/bulbulator.config.sh ]; then
-#	echo 'Missing configuration file (bulbulator.config.sh).'
-#	echo 'Please review a bulbulator.config.sh.sample for futher informations.'
+#if [ ! -f $script_dir/etc/bulbulator.config.sh ]; then
+#	echo 'Missing configuration file (etc/bulbulator.config.sh).'
+#	echo 'Please review a etc/bulbulator.config.sh.sample for futher informations.'
 #	show_usage
 #	exit 1
 #fi
 
-
-# . $script_dir/bulbulator.config.sh
+# . $script_dir/etc/bulbulator.config.sh
 
 while test $# -gt 0; do
     case "$1" in
@@ -77,11 +87,26 @@ while test $# -gt 0; do
             export SUB_DOMAIN=$1
             shift
             ;;
+        --with-db-drop)
+            shift
+            export DROP_DB=true
+            ;;
         *)
             break
             ;;
     esac
 done
+
+#echo
+#echo "--- VARS ---"
+#echo $REPOSITORY_URL
+#echo $BRANCH
+#echo $COMMIT_HASH
+#echo $ENV_NAME
+#echo $WEBSITE
+#echo $SUB_DOMAIN
+#echo $DROP_DB
+#exit
 
 if [ -z "$REPOSITORY_URL" ]; then
     echo "(-r) Repository url param is missing"
@@ -107,7 +132,8 @@ if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
 fi
 
-export SETUP_DIR=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+export SETUP_DIR_LINK=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
 # e.g http://eset.eset_testing.testing.nexwai.pl/
 export DOMAIN=`illegal_char_replace $BRANCH '-'`
@@ -115,20 +141,18 @@ export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
 
 export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 
-
-
 # exit if environment exist
-if [ -d "$SETUP_DIR" ]; then
-    echo "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
-    echo -e "try \n\t\trm -rf $SETUP_DIR"
-    exit 1
-fi
+#if [ -d "$SETUP_DIR" ]; then
+#    echo "ERROR! This environment already exists, remove it before ($SETUP_DIR)"
+#    echo -e "try \n\t\trm -rf $SETUP_DIR"
+#    exit 1
+#fi
 
 # create base setup dir if not exist e.g /var/www/testing/
 if [ ! -d "$BASE_SETUP_DIR" ]; then
     # check if we have permission to create "testing" directory
     if [ -w "$BASE_SETUP_DIR_TO_CHECK" ]; then
-        echo "Step: Create directory" $BASE_SETUP_DIR
+        print_msg "Step: Create directory" $BASE_SETUP_DIR
         mkdir -p $BASE_SETUP_DIR || { echo "ERROR! Directory not created" ; exit 1; }
         echo Directory created
     # print error if we do not have permissions
@@ -138,7 +162,12 @@ if [ ! -d "$BASE_SETUP_DIR" ]; then
     fi
 fi
 
-echo "Step 0: Download repository $REPOSITORY_URL to $SETUP_DIR"
+if [ -a "$SETUP_DIR" ] && [ ! -w "$SETUP_DIR" ]; then
+    echo "ERROR!  Permission denied for destination dir: $SETUP_DIR"
+    exit 1
+fi
+
+print_msg "Step: Download repository $REPOSITORY_URL to $SETUP_DIR"
 
 ## Cache repo!!
 TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
@@ -156,15 +185,47 @@ git checkout $BRANCH
 git pull ## update only THE branch in cached repo
 ## END cache repo
 
-git clone $TMP_REPO $SETUP_DIR || exit 1;
+if [ -L "$SETUP_DIR_LINK" ]; then
+    print_msg "Step: Coping old instance from sybolic link"
+    # we are not able to use "cp -RL" (nested media symlink)
+    dir_to_copy=`readlink -f "$SETUP_DIR_LINK"`
+    if [ -d $dir_to_copy ]; then
+        cp -R "$dir_to_copy" "$SETUP_DIR" 2>/dev/null
+    else
+        print_msg "Error! Cannot copy old instance of Magento from sumbolic link which points to $dir_to_copy"
+        exit 1;
+    fi
+
+    print_msg "Step: update git"
+    cd $SETUP_DIR
+    git fetch origin
+    git checkout origin/$BRANCH
+    git branch -D $BRANCH
+    git checkout -b $BRANCH
+    cd -
+elif [ -d "$SETUP_DIR_LINK" ]; then
+    print_msg "Step: Coping old instance"
+    cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
+    
+    print_msg "Step: update git"
+    cd $SETUP_DIR
+    git fetch origin
+    git checkout origin/$BRANCH 
+    git branch -D $BRANCH
+    git checkout -b $BRANCH
+    cd -
+else
+    print_msg "Step: Cloning repo"
+    git clone $TMP_REPO $SETUP_DIR || { print_msg "Error! Cannot clone repo"; exit 1; }
+fi
 
 cd $SETUP_DIR
-git fetch --all
+
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
-    git branch --track ${branch##*/} $branch
+    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
 done
 
-echo "Step: checkout to branch - $BRANCH"
+print_msg "Step: checkout to branch - $BRANCH"
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
 	echo "";
