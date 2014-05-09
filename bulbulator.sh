@@ -138,6 +138,7 @@ export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 # e.g http://eset.eset_testing.testing.nexwai.pl/
 export DOMAIN=`illegal_char_replace $BRANCH '-'`
 export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
+export STORE_URL_SECURE="https://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
 
 export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 
