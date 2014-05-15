@@ -138,6 +138,7 @@ export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 # e.g http://eset.eset_testing.testing.nexwai.pl/
 export DOMAIN=`illegal_char_replace $BRANCH '-'`
 export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
+export STORE_URL_SECURE="https://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
 
 export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 
@@ -152,7 +153,7 @@ export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 if [ ! -d "$BASE_SETUP_DIR" ]; then
     # check if we have permission to create "testing" directory
     if [ -w "$BASE_SETUP_DIR_TO_CHECK" ]; then
-        echo "Step: Create directory" $BASE_SETUP_DIR
+        print_msg "Step: Create directory" $BASE_SETUP_DIR
         mkdir -p $BASE_SETUP_DIR || { echo "ERROR! Directory not created" ; exit 1; }
         echo Directory created
     # print error if we do not have permissions
@@ -167,7 +168,7 @@ if [ -a "$SETUP_DIR" ] && [ ! -w "$SETUP_DIR" ]; then
     exit 1
 fi
 
-echo "Step 0: Download repository $REPOSITORY_URL to $SETUP_DIR"
+print_msg "Step: Download repository $REPOSITORY_URL to $SETUP_DIR"
 
 ## Cache repo!!
 TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
@@ -185,17 +186,47 @@ git checkout $BRANCH
 git pull ## update only THE branch in cached repo
 ## END cache repo
 
-if [ ! -d "$SETUP_DIR" ]; then
-    git clone $TMP_REPO $SETUP_DIR || exit 1;
+if [ -L "$SETUP_DIR_LINK" ]; then
+    print_msg "Step: Coping old instance from sybolic link"
+    # we are not able to use "cp -RL" (nested media symlink)
+    dir_to_copy=`readlink -f "$SETUP_DIR_LINK"`
+    if [ -d $dir_to_copy ]; then
+        cp -R "$dir_to_copy" "$SETUP_DIR" 2>/dev/null
+    else
+        print_msg "Error! Cannot copy old instance of Magento from sumbolic link which points to $dir_to_copy"
+        exit 1;
+    fi
+
+    print_msg "Step: update git"
+    cd $SETUP_DIR
+    git fetch origin
+    git checkout origin/$BRANCH
+    git branch -D $BRANCH
+    git checkout -b $BRANCH
+    cd -
+elif [ -d "$SETUP_DIR_LINK" ]; then
+    print_msg "Step: Coping old instance"
+    cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
+    
+    print_msg "Step: update git"
+    cd $SETUP_DIR
+    git fetch origin
+    git checkout origin/$BRANCH 
+    git branch -D $BRANCH
+    git checkout -b $BRANCH
+    cd -
+else
+    print_msg "Step: Cloning repo"
+    git clone $TMP_REPO $SETUP_DIR || { print_msg "Error! Cannot clone repo"; exit 1; }
 fi
 
 cd $SETUP_DIR
-git fetch --all
+
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
     git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
 done
 
-echo "Step: checkout to branch - $BRANCH"
+print_msg "Step: checkout to branch - $BRANCH"
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
 	echo "";
