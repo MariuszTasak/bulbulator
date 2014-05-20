@@ -35,6 +35,13 @@ print_msg()
     echo -e "----------------------------------------------------------------------\n"
 }
 
+print_error()
+{
+    echo -e "\n----------------------------------------------------------------------"
+    echo -e "ERROR: "$1
+    echo -e "----------------------------------------------------------------------\n"
+}
+
 illegal_char_replace()
 {
 	echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
@@ -43,6 +50,14 @@ illegal_char_replace()
 get_current_timestamp()
 {
     echo `date +%s`
+}
+
+git_update()
+{
+    git fetch origin || { print_error "Unable to git fetch origin"; exit 1; }
+    git checkout origin/$BRANCH || { print_error "Unable to git checkout origin/"$BRANCH; exit 1; }
+    git branch -D $BRANCH || { print_error "Unable to git branch -D "$BRANCH; exit 1; }
+    git checkout -b $BRANCH || { print_error "Unable to git checkout -b "$BRANCH; exit 1; }
 }
 
 script_dir=$(cd `dirname $0` && pwd)
@@ -199,10 +214,7 @@ if [ -L "$SETUP_DIR_LINK" ]; then
 
     print_msg "Step: update git"
     cd $SETUP_DIR
-    git fetch origin
-    git checkout origin/$BRANCH
-    git branch -D $BRANCH
-    git checkout -b $BRANCH
+    git_update
     cd -
 elif [ -d "$SETUP_DIR_LINK" ]; then
     print_msg "Step: Coping old instance"
@@ -210,10 +222,7 @@ elif [ -d "$SETUP_DIR_LINK" ]; then
     
     print_msg "Step: update git"
     cd $SETUP_DIR
-    git fetch origin
-    git checkout origin/$BRANCH 
-    git branch -D $BRANCH
-    git checkout -b $BRANCH
+    git_update
     cd -
 else
     print_msg "Step: Cloning repo"
