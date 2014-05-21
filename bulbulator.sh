@@ -9,22 +9,23 @@ Usage:
 2. run bulbulator with required ENV variables set up
 
    2.1 Either from file
-   . etc/bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN] [--with-db-drop]
+   . etc/bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV -w WEBSITE [-s SUBDOMAIN] [--with-db-drop] [--domain-separator "-"]
 
    2.2 or via command line
-   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl --with-db-drop
+   MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl --with-db-drop [--domain-separator "-"]
 
 It will be installed in $BASE_SETUP_DIR (check etc/bulbulator.config.sh.sample) and be accessible
 via http://WEBSITE.BRANCH.SUBDOMAIN (ie eset.s30.testing.nexwai.pl)
 
 where
-    REPOSITORY_URL  get if from github (git@github.com:NexwayGroup/Nexway-3.0.git)
-    BRANCH          branch :)
-    ENV             'prod' or 'prep'
-    WEBSITE         i.e. eset
-    SUBDOMAIN       default testing.nexwai.pl
-                    when using on prep.nexwai.pl available are:
-                    testing.nexwai.pl and demo.nexwai.pl (define vhosts to have more)
+    REPOSITORY_URL    get if from github (git@github.com:NexwayGroup/Nexway-3.0.git)
+    BRANCH            branch :)
+    ENV               'prod' or 'prep'
+    WEBSITE           i.e. eset
+    SUBDOMAIN         default testing.nexwai.pl
+                      when using on prep.nexwai.pl available are:
+                      testing.nexwai.pl and demo.nexwai.pl (define vhosts to have more)
+    DOMAIN_SEPARATOR  domain separator by default "-"
 "
 }
 
@@ -102,6 +103,11 @@ while test $# -gt 0; do
             export SUB_DOMAIN=$1
             shift
             ;;
+        --domain-separator)
+            shift
+            export DOMAIN_SEPARATOR=$1
+            shift
+            ;;
         --with-db-drop)
             shift
             export DROP_DB=true
@@ -146,14 +152,17 @@ fi
 if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
 fi
+if [ -z "$DOMAIN_SEPARATOR" ]; then
+    export DOMAIN_SEPARATOR="-"
+fi
 
 export SETUP_DIR_LINK=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
 export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
-# e.g http://eset.eset_testing.testing.nexwai.pl/
+# e.g http://eset-branchname-testing.nexwai.pl/
 export DOMAIN=`illegal_char_replace $BRANCH '-'`
-export STORE_URL="http://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
-export STORE_URL_SECURE="https://"${WEBSITE}.${DOMAIN}.${SUB_DOMAIN}"/"
+export STORE_URL="http://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
+export STORE_URL_SECURE="https://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 
 export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
 
