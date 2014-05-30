@@ -24,11 +24,13 @@ Please note this is not safe, so don't put there any password you don't want to 
 
 Then you may call bulbulator in this way:
 
-    . configs/gpawlik/common.sh && bulbulator.sh -b branch -w eset
+    . configs/gpawlik/demo/common.sh && bulbulator.sh -b branch -w eset
 
 or with superblb:
 
-    . configs/tenwamega/common.sh && ./superblb.sh configs/tenwamega/staging/*
+    . configs/tenwamega/demo/common.sh && ./superblb.sh configs/tenwamega/demo/instances*
+
+To set-up/update all demo instances known to bulbulator
 
 
 # superblb

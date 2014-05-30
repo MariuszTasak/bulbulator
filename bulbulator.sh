@@ -158,7 +158,7 @@ if [ -z "$DOMAIN_SEPARATOR" ]; then
     export DOMAIN_SEPARATOR="-"
 fi
 
-export SETUP_DIR_LINK=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+export SETUP_DIR_LINK="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`/`illegal_char_replace $WEBSITE '-'`"
 export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
 # e.g http://eset-branchname-testing.nexwai.pl/
