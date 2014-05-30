@@ -166,7 +166,7 @@ export DOMAIN=`illegal_char_replace $BRANCH '-'`
 export STORE_URL="http://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 export STORE_URL_SECURE="https://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 
-export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
+export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
 
 # exit if environment exist
 #if [ -d "$SETUP_DIR" ]; then
