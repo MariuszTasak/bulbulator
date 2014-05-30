@@ -199,7 +199,7 @@ print_msg "Step: Download repository $REPOSITORY_URL to $SETUP_DIR"
 ## Cache repo!!
 TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
 if [ ! -d "$TMP_REPO" ]; then
-    git clone $REPOSITORY_URL $TMP_REPO
+    git clone $REPOSITORY_URL $TMP_REPO --mirror
 fi
 
 cd $TMP_REPO
@@ -208,8 +208,7 @@ git fetch --all
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
     git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
 done
-git checkout $BRANCH
-git pull ## update only THE branch in cached repo
+
 ## END cache repo
 
 if [ -L "$SETUP_DIR_LINK" ]; then
