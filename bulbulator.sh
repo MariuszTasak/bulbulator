@@ -241,6 +241,7 @@ fi
 
 cd $SETUP_DIR
 
+git stash save "check blb, can't update repo if local changes"
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
     git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
 done
