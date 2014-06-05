@@ -1,7 +1,7 @@
 export MYSQL_USER="dev"
 export MYSQL_PASSWORD="dev"
 export MYSQL_DB_PREFIX="blb_"
-export MYSQL_DB_HOST=$SSH_CLIENT_IP
+export MYSQL_DB_HOST=`echo $SSH_CLIENT | awk '{print $1}'`
 
 export BASE_SETUP_DIR_TO_CHECK="/home/gpawlik/vhosts/"
 export BASE_SETUP_DIR=$BASE_SETUP_DIR_TO_CHECK"blb/"
