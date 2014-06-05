@@ -158,7 +158,7 @@ if [ -z "$DOMAIN_SEPARATOR" ]; then
     export DOMAIN_SEPARATOR="-"
 fi
 
-export SETUP_DIR_LINK=$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`
+export SETUP_DIR_LINK="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`/`illegal_char_replace $WEBSITE '-'`"
 export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
 # e.g http://eset-branchname-testing.nexwai.pl/
@@ -166,7 +166,7 @@ export DOMAIN=`illegal_char_replace $BRANCH '-'`
 export STORE_URL="http://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 export STORE_URL_SECURE="https://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 
-export MYSQL_DB_NAME=$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`
+export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
 
 # exit if environment exist
 #if [ -d "$SETUP_DIR" ]; then
@@ -199,17 +199,11 @@ print_msg "Step: Download repository $REPOSITORY_URL to $SETUP_DIR"
 ## Cache repo!!
 TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
 if [ ! -d "$TMP_REPO" ]; then
-    git clone $REPOSITORY_URL $TMP_REPO
+    git clone $REPOSITORY_URL $TMP_REPO --mirror
 fi
-
 cd $TMP_REPO
-git fetch --all
-# http://stackoverflow.com/questions/67699/how-do-i-clone-all-remote-branches-with-git
-for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
-    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
-done
-git checkout $BRANCH
-git pull ## update only THE branch in cached repo
+git remote update # update all refs (--mirror check out git man page for details)
+
 ## END cache repo
 
 if [ -L "$SETUP_DIR_LINK" ]; then
@@ -242,11 +236,18 @@ fi
 
 cd $SETUP_DIR
 
+git stash save "check blb, can't update repo if local changes"
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
     git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
 done
 
 print_msg "Step: checkout to branch - $BRANCH"
+
+## there can be issues when once used example.com/repo.git and other times example.com/repo (no .git)
+ # in such cases updated TMP_REPO will be different than remote origin, and no update will happen!
+git remote rm origin
+git remote add origin $TMP_REPO
+
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
 	echo "";

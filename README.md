@@ -1,7 +1,7 @@
 # Latest bulbulator always on:
 http://goo.gl/uX2wCq
 
-## How to use it
+# How to use it
 
 1. Check out bulbulator.config.sh.sample for ENVs required to run bulbulator
     1. To use saved config file run `. bulbulator.config.sh && bulbulator.sh [OPTIONS]`
@@ -11,6 +11,35 @@ http://goo.gl/uX2wCq
 with such layout one could have many config files and run 
 `. config1.sh && bulbulator ...`
 
+# deployment levels
+
+Check out different stages of deployment here: https://docs.google.com/a/nexway.com/spreadsheets/d/1IL10l2MxAwmHvNTsIT4UM36JWQbD-GcJg98t1PdQJE4/edit#gid=0
+
+# Stored configs
+To make your life easier you may store configs in the repo:
+
+    configs/
+        server_name/
+            whatever_layout_fits_your_server
+
+especially put your name (eg. `gpawlik`) as server name to keep your local configs.
+
+Please note this is not safe, so don't put there any password you don't want to share.
+
+Then you may call bulbulator in this way:
+
+    . configs/gpawlik/demo/common.sh && bulbulator.sh -b branch -w eset
+
+or with superblb:
+
+    . configs/tenwamega/demo/common.sh && ./superblb.sh configs/tenwamega/demo/instances*
+
+To set-up/update all demo instances known to bulbulator
+
+
+# superblb
+
+This is tool to make MANY deploys at once. Check out [the example](/configs/gpawlik/README.md)
 
 # Ideas for the future
 
