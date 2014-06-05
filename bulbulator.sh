@@ -201,13 +201,8 @@ TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
 if [ ! -d "$TMP_REPO" ]; then
     git clone $REPOSITORY_URL $TMP_REPO --mirror
 fi
-
 cd $TMP_REPO
-git fetch --all
-# http://stackoverflow.com/questions/67699/how-do-i-clone-all-remote-branches-with-git
-for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
-    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
-done
+git remote update # update all refs (--mirror check out git man page for details)
 
 ## END cache repo
 
@@ -247,6 +242,12 @@ for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; d
 done
 
 print_msg "Step: checkout to branch - $BRANCH"
+
+## there can be issues when once used example.com/repo.git and other times example.com/repo (no .git)
+ # in such cases updated TMP_REPO will be different than remote origin, and no update will happen!
+git remote rm origin
+git remote add origin $TMP_REPO
+
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
 	echo "";
