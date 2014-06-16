@@ -1,5 +1,5 @@
 export BASE_SETUP_DIR=$BASE_SETUP_DIR_TO_CHECK"staging/"
 export ENV_NAME=prod
-export WEBSITE=avast
+export WEBSITE=webstore
 export SUB_DOMAIN=staging.nexwai.pl
-export BRANCH=develop
+export BRANCH=${RELEASE_BRANCH:? "[ERROR!] please define RELEASE_BRANCH env!!!"}
