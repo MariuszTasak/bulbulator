@@ -11,6 +11,10 @@ http://goo.gl/uX2wCq
 with such layout one could have many config files and run 
 `. config1.sh && bulbulator ...`
 
+# deployment levels
+
+Check out different stages of deployment here: https://docs.google.com/a/nexway.com/spreadsheets/d/1IL10l2MxAwmHvNTsIT4UM36JWQbD-GcJg98t1PdQJE4/edit#gid=0
+
 # Stored configs
 To make your life easier you may store configs in the repo:
 
@@ -24,11 +28,13 @@ Please note this is not safe, so don't put there any password you don't want to 
 
 Then you may call bulbulator in this way:
 
-    . configs/gpawlik/common.sh && bulbulator.sh -b branch -w eset
+    . configs/gpawlik/demo/common.sh && bulbulator.sh -b branch -w eset
 
 or with superblb:
 
-    . configs/tenwamega/common.sh && ./superblb.sh configs/tenwamega/staging/*
+    . configs/tenwamega/demo/common.sh && ./superblb.sh configs/tenwamega/demo/instances*
+
+To set-up/update all demo instances known to bulbulator
 
 
 # superblb
