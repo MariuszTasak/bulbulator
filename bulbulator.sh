@@ -28,6 +28,9 @@ where
                       when using on prep.nexwai.pl available are:
                       testing.nexwai.pl and demo.nexwai.pl (define vhosts to have more)
     DOMAIN_SEPARATOR  domain separator by default "-"
+
+3. Delete exdisting environment:
+   . etc/bulbulator.config.sh && bash bulbulator.sh -b BRANCH -w WEBSITE --drop-env
 "
 }
 
@@ -64,14 +67,6 @@ git_update()
 }
 
 script_dir=$(cd `dirname $0` && pwd)
-#if [ ! -f $script_dir/etc/bulbulator.config.sh ]; then
-#	echo 'Missing configuration file (etc/bulbulator.config.sh).'
-#	echo 'Please review a etc/bulbulator.config.sh.sample for futher informations.'
-#	show_usage
-#	exit 1
-#fi
-
-# . $script_dir/etc/bulbulator.config.sh
 
 while test $# -gt 0; do
     case "$1" in
@@ -83,7 +78,7 @@ while test $# -gt 0; do
         -b|--branch)
             shift
             export BRANCH=$1
-			shift
+            shift
             ;;
         -c|--commit)
             shift
@@ -114,6 +109,10 @@ while test $# -gt 0; do
             shift
             export DROP_DB=true
             ;;
+        --drop-env)
+            shift
+            export DROP_ENV=true
+            ;;
         *)
             break
             ;;
@@ -131,33 +130,28 @@ done
 #echo $DROP_DB
 #exit
 
-if [ -z "$REPOSITORY_URL" ]; then
-    echo "(-r) Repository url param is missing"
-    show_usage
-    exit 1
+if [ -z "$SUB_DOMAIN" ]; then
+    export SUB_DOMAIN="testing.nexwai.pl"
 fi
+
+if [ -z "$DOMAIN_SEPARATOR" ]; then
+    export DOMAIN_SEPARATOR="-"
+fi
+
 if [ -z "$BRANCH" ]; then
     echo "(-b) Branch param is missing"
     show_usage
     exit 1
 fi
-if [ -z "$ENV_NAME" ]; then
-    echo "(-e [prep|prod]) Env name param is missing"
-    show_usage
-    exit 1
-fi
+
 if [ -z "$WEBSITE" ]; then
     echo "(-w) Website param is missing"
     show_usage
     exit 1
 fi
-if [ -z "$SUB_DOMAIN" ]; then
-    export SUB_DOMAIN="testing.nexwai.pl"
-fi
-if [ -z "$DOMAIN_SEPARATOR" ]; then
-    export DOMAIN_SEPARATOR="-"
-fi
 
+export SETUP_BRANCH_BASE_DIR="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`"
+export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
 export SETUP_DIR_LINK="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`/`illegal_char_replace $WEBSITE '-'`"
 export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
@@ -166,7 +160,24 @@ export DOMAIN=`illegal_char_replace $BRANCH '-'`
 export STORE_URL="http://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 export STORE_URL_SECURE="https://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 
-export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
+# drop environment if option --drop-env exists
+if [ -n "$DROP_ENV" ]; then
+    source $script_dir/lib/drop_env.sh
+    drop_environment
+    exit 0;
+fi
+
+if [ -z "$ENV_NAME" ]; then
+    echo "(-e [prep|prod]) Env name param is missing"
+    show_usage
+    exit 1
+fi
+
+if [ -z "$REPOSITORY_URL" ]; then
+    echo "(-r) Repository url param is missing"
+    show_usage
+    exit 1
+fi
 
 # exit if environment exist
 #if [ -d "$SETUP_DIR" ]; then
