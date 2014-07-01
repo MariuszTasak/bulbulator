@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  .table-responsive
+    table.table.table-striped.table-hover
+      thead
+        th Branch
+        th Website
+        th Creator
+        th Environment
+        th Store URL
+        th Commit Hash
+        th Created At
+        th Status
+        th
+      tbody
+        - each environment in environments
+          tr
+            td=environment.branch
+            td=environment.website
+            td=environment.creator
+            td=environment.environment
+            td=environment.store_url
+            td=environment.commit_hash
+            td=environment.created_at
+            td
+              case environment.status
+                when 0
+                  .label.label-danger Offline
+                when 1
+                  .label.label-success Online
+            td
+              .dropdown
+                button.btn.btn-default.dropdown-toggle(data-toggle='dropdown', type='button') Actions&nbsp;
+                  span.caret
+                ul.dropdown-menu(role='menu')
+                  li
+                    a(href='#0') Update
+                  li
+                    a(href='#0') Delete
+

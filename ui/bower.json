@@ -1,0 +1,24 @@
+{
+  "name": "bulbulator",
+  "version": "0.0.1",
+  "homepage": "https://github.com/NexwayGroup/bulbulator.git",
+  "authors": [
+    "Jonathan Gautheron <jgautheron@nexway.com>"
+  ],
+  "description": "Bulbulator UI",
+  "moduleType": [
+    "globals"
+  ],
+  "license": "GPLv2",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "app/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "moment": "~2.7.0"
+  }
+}
