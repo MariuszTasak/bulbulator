@@ -1,0 +1,34 @@
+extends layout
+
+block content
+  .container
+    div(ng-controller='NewEnvironmentCtrl')
+      .page-header
+        h1 Bulbulator Environments
+        p.lead Currently, there
+          ng-pluralize(count='environments.length', when="{'0': ' is no environment ', 'one': ' is one environment ', 'other': ' are {} environments '}")
+          | bulbulated.
+
+      .table-responsive
+        table.table.table-striped.table-hover(ng-table='tableParams')
+          tr(ng-repeat='env in $data')
+            td(data-title="'Branch'", sortable="'branch'") {{env.branch}}
+            td(data-title="'Website'", sortable="'website'") {{env.website}}
+            td(data-title="'Creator'", sortable="'creator'") {{env.creator}}
+            td(data-title="'Environment'", sortable="'environment'") {{env.environment}}
+            td(data-title="'Store URL'") {{env.store_url}}
+            td(data-title="'Commit Hash'") {{env.commit_hash}}
+            td(data-title="'Created'", am-time-ago='env.created_at', sortable="'created_at'")
+            td(data-title="'Status'", sortable="'status'") 0
+            td(data-title="'Action'")
+              .dropdown
+                button.btn.btn-default.dropdown-toggle(data-toggle='dropdown', type='button') Actions&nbsp;
+                  span.caret
+                ul.dropdown-menu(role='menu')
+                  li
+                    a(href='#0') Update
+                  li
+                    a(href='#0') Delete
+
+  script.
+    window.environments = !{JSON.stringify(environments)};
