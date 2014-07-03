@@ -7,6 +7,7 @@ html
     link(rel='stylesheet', href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
     link(rel='stylesheet', href='components/ng-table/ng-table.min.css')
     link(rel='stylesheet', href='stylesheets/main.css')
+
   body(ng-app='bulbulatorApp')
     .navbar.navbar-inverse.navbar-fixed-top(role='navigation')
       .container
@@ -25,11 +26,27 @@ html
                 a(href='/new') New
             if user
               .navbar-right
-                p.navbar-text Identified as #{user.displayName} &nbsp;
+                p.navbar-text
+                  | Identified as &nbsp;
+                  span.label.label-default #{user.displayName}
+                  | &nbsp;
                   a.btn.btn-danger.btn-xs(href='/logout') Logout
+                  img(src=user.gravatarLink, width='20', style='border-radius: 3px; margin-left: 10px;')
             else
               .navbar-form.navbar-right
                  a.btn.btn-success(href='/auth/google', role='button') Sign in
+
+    if error_messages.length > 0 || success_messages.length > 0 || warning_messages.length > 0 || info_messages.length > 0
+      .container
+        br
+        each error in error_messages
+          .alert.alert-danger= error
+        each success in success_messages
+          .alert.alert-success= success
+        each warning in warning_messages
+          .alert.alert-warning= warning
+        each info in info_messages
+          .alert.alert-info= info
 
     block content
 

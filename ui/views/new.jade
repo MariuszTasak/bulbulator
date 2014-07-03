@@ -4,31 +4,52 @@ block content
   .container
     div(ng-controller='NewEnvironmentCtrl')
       .page-header
-        h1 Bulbulator Environments
-        p.lead Currently, there
-          ng-pluralize(count='environments.length', when="{'0': ' is no environment ', 'one': ' is one environment ', 'other': ' are {} environments '}")
-          | bulbulated.
+        h1 Deploy a new environment
 
-      .table-responsive
-        table.table.table-striped.table-hover(ng-table='tableParams')
-          tr(ng-repeat='env in $data')
-            td(data-title="'Branch'", sortable="'branch'") {{env.branch}}
-            td(data-title="'Website'", sortable="'website'") {{env.website}}
-            td(data-title="'Creator'", sortable="'creator'") {{env.creator}}
-            td(data-title="'Environment'", sortable="'environment'") {{env.environment}}
-            td(data-title="'Store URL'") {{env.store_url}}
-            td(data-title="'Commit Hash'") {{env.commit_hash}}
-            td(data-title="'Created'", am-time-ago='env.created_at', sortable="'created_at'")
-            td(data-title="'Status'", sortable="'status'") 0
-            td(data-title="'Action'")
-              .dropdown
-                button.btn.btn-default.dropdown-toggle(data-toggle='dropdown', type='button') Actions&nbsp;
-                  span.caret
-                ul.dropdown-menu(role='menu')
-                  li
-                    a(href='#0') Update
-                  li
-                    a(href='#0') Delete
+      .row
+        .col-md-5
+
+          form.form-horizontal(role='form')
+              .form-group
+                  label.col-sm-3.control-label(for='repository') Repository
+                  .col-sm-6
+                    select#repository.form-control(name='repository', ng-model='repository', ng-options="s.owner.login for s in repositories", ng-change="load.branches(repository);", ng-disabled='!repositories')
+                      option(value='') -- choose repository --
+              .form-group
+                  label.col-sm-3.control-label(for='branch') Branch
+                  .col-sm-6
+                    select#branch.form-control(name='branch', ng-model='branch', ng-options="s.name for s in branches", ng-disabled='!branches', ng-change='commit=branch.commit.sha')
+                      option(value='') -- choose branch --
+              .form-group
+                  label.col-sm-3.control-label(for='commit') Commit
+                  .col-sm-9
+                    input#commit.form-control(type='text', name='commit', ng-model='commit', ng-disabled='!branch', ng-value='branch.commit.sha')
+              .form-group
+                  label.col-sm-3.control-label(for='website') Website
+                  .col-sm-6
+                    select#website.form-control(name='website', ng-model='website', ng-options="s.name for s in websites", ng-change="load.environments(repository, commit, website);", ng-disabled='!websites')
+                      option(value='') -- choose website --
+              .form-group
+                  label.col-sm-3.control-label(for='environment') Environment
+                  .col-sm-6
+                    select#environment.form-control(name='environment', disabled, ng-model='environment', ng-options="s.name for s in environments")
+                      option(value='') -- choose environment --
+
+              .form-group
+                .col-sm-offset-3.col-sm-10
+                  .checkbox
+                    label
+                      input(type='checkbox', name='send-email')
+                      | Send me an email once the environment will be up
+              .form-group
+                .col-sm-offset-3.col-sm-10
+                  button.btn.btn-success(type='submit') Deploy
+        .col-md-7
+          .desc
+            .commit-selected(ng-show='commitInfo')
+              | commit selected
+            .form-filled(ng-show='formFilled')
+              | form filled
 
   script.
     window.environments = !{JSON.stringify(environments)};

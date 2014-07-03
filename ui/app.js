@@ -8,6 +8,8 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var flash = require('connect-flash');
+var gravatar = require('nodejs-gravatar');
 
 var routes = require('./routes/index'),
     hooks = require('./routes/hooks'),
@@ -21,9 +23,9 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(obj, done) {
+  obj.gravatarLink = gravatar.imageUrl(obj.emails[0].value, { "size": "20" });
   done(null, obj);
 });
-
 
 // Use the GoogleStrategy within Passport.
 //   Strategies in passport require a `validate` function, which accept
@@ -58,10 +60,26 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
+app.use(flash());
 app.use(session({secret: 'super bulbulatore', cookie: { maxAge: 3600000 }}));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(function(req, res, next) {
+  // flash messages
+  res.locals.success_messages = req.flash('success');
+  res.locals.error_messages = req.flash('error');
+  res.locals.warning_messages = req.flash('warning');
+  res.locals.info_messages = req.flash('info');
+
+  // user object
+  res.locals.user = req.user;
+
+  next();
+});
+
+//app.all('/new*', ensureAuthenticated);
 
 app.use('/', routes);
 app.use('/environments', environments);
@@ -102,6 +120,7 @@ app.get('/logout', function(req, res){
 //   login page.
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
+  req.flash('error', 'You have to be logged in to access this page.');
   res.redirect('/');
 }
 
