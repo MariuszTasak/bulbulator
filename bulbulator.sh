@@ -50,7 +50,7 @@ print_error()
 
 illegal_char_replace()
 {
-	echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
+    echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
 }
 
 get_current_timestamp()
@@ -67,6 +67,12 @@ git_update()
 }
 
 script_dir=$(cd `dirname $0` && pwd)
+
+# bulbulator cannot be run as root
+if [[ $EUID == "0" ]]; then
+   echo "Running Bulbulator as root is forbidden" 1>&2
+   exit 1
+fi
 
 while test $# -gt 0; do
     case "$1" in
@@ -103,6 +109,21 @@ while test $# -gt 0; do
         --domain-separator)
             shift
             export DOMAIN_SEPARATOR=$1
+            shift
+            ;;
+        --without-notification)
+            shift
+            export SEND_NOTIFICATION=false
+            shift
+            ;;
+        --hook-creation-url)
+            shift
+            export HOOK_CREATION_URL=$1
+            shift
+            ;;
+        --hook-deletion-url)
+            shift
+            export HOOK_DELETION_URL=$1
             shift
             ;;
         --with-db-drop)
@@ -148,6 +169,22 @@ if [ -z "$WEBSITE" ]; then
     echo "(-w) Website param is missing"
     show_usage
     exit 1
+fi
+
+if [ -z "$SUB_DOMAIN" ]; then
+    export SUB_DOMAIN="testing.nexwai.pl"
+fi
+if [ -z "$DOMAIN_SEPARATOR" ]; then
+    export DOMAIN_SEPARATOR="-"
+fi
+if [[ -z "$SEND_NOTIFICATION" ] ]; then
+    export SEND_NOTIFICATION=true
+fi
+if [ -z "$HOOK_CREATION_URL" ]; then
+    export HOOK_CREATION_URL="https://bulbulator.nexwai.pl/hooks/creation"
+fi
+if [ -z "$HOOK_DELETION_URL" ]; then
+    export HOOK_DELETION_URL="https://bulbulator.nexwai.pl/hooks/deletion"
 fi
 
 export SETUP_BRANCH_BASE_DIR="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`"
@@ -235,7 +272,7 @@ if [ -L "$SETUP_DIR_LINK" ]; then
 elif [ -d "$SETUP_DIR_LINK" ]; then
     print_msg "Step: Coping old instance"
     cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
-    
+
     print_msg "Step: update git"
     cd $SETUP_DIR
     git_update
@@ -261,10 +298,10 @@ git remote add origin $TMP_REPO
 
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
-	echo "";
-	echo "ERROR! Branch you're trying to get is not compatibile with new version of bulbulator
-please merge with latest main branch."	
-	exit 1;    
+    echo "";
+    echo "ERROR! Branch you're trying to get is not compatible with the new version of bulbulator
+please merge with latest main branch."
+    exit 1;
 fi
 
-./shell/bulbulator/bulbulate.sh 
+./shell/bulbulator/bulbulate.sh

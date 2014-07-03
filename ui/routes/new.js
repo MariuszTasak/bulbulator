@@ -29,7 +29,6 @@ connection.query('USE bulbulator');
 
 /* GET new page. */
 router.get('/', function(req, res) {
-
   connection.query('SELECT * FROM environments', function(err, rows) {
     res.render('new', { environments : rows });
   });

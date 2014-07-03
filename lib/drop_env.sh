@@ -2,7 +2,7 @@ confirm() {
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
     case $response in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS]|[yY])
             true
             ;;
         *)
@@ -51,7 +51,7 @@ drop_environment()
         exit 1;
     fi
 
-    print_msg "WARNING! This command will drop following instance!"
+    print_msg "WARNING! This command will drop the following instance:"
 
     echo "Instance info:"
     echo "  Website: $WEBSITE"
@@ -67,7 +67,7 @@ drop_environment()
     echo ""
 
     confirm "Would you really like to drop this instance? [y/N]"
-    
+
     if [ $? -eq 0 ]; then
         drop_database_and_remove_files
     else
