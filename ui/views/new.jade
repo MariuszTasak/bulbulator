@@ -76,7 +76,7 @@ block content
                   tr(ng-repeat='info in $data')
                     td.col-sm-1.col-md-1.col-lg-1(data-title="'Author'", sortable="'commit.author.name'", commit-author)
                     td.col-sm-2.col-md-2.col-lg-2(data-title="'Date'", am-time-ago='info.commit.author.date', sortable="'commit.author.date'")
-                    td(data-title="'Message'", filter="{'message': 'text'}", commit-message)
+                    td.col-sm-6.col-md-6.col-lg-6(data-title="'Message'", filter="{'message': 'text'}", commit-message)
 
 
 

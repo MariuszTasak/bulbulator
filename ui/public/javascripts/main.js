@@ -186,11 +186,10 @@ app.controller('NewEnvironmentCtrl', [
     link: link,
     template: '<img src="{{info.committer.avatar_url}}" width="20" class="gravatar-small"> {{info.author}}'
   };
-}).directive('commitMessage', ['BBL_CONSTANT'], function() {
+}).directive('commitMessage', function(BBL_CONSTANT) {
   function link(scope, element, attrs) {
-    console.log(BBL_CONSTANT)
     var message = scope.info.message;
-    message = message.replace(/kid\-(\d+)/ig, '<a href="test">KID-$1</a>');
+    message = message.replace(/kid\-(\d+)/ig, '<a href="'+BBL_CONSTANT.JIRA_BROWSER_URL+'KID-$1" target="_blank">KID-$1</a>');
     element.html(message);
   }
   return {
