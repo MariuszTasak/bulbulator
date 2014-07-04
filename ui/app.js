@@ -23,7 +23,7 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(obj, done) {
-  obj.gravatarLink = gravatar.imageUrl(obj.emails[0].value, { "size": "20" });
+  obj.gravatarLink = gravatar.imageUrl(obj.emails[0].value, { size: 20 });
   done(null, obj);
 });
 

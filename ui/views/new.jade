@@ -47,7 +47,39 @@ block content
         .col-md-7
           .desc
             .commit-selected(ng-show='commitInfo')
-              | commit selected
+              .panel.panel-info
+                .panel-heading
+                  h3.panel-title Latest Commit Info
+                .panel-body
+                  .form-horizontal
+                    .form-group
+                        label.col-sm-3.control-label Author
+                        .col-sm-9
+                          .checkbox
+                            img.gravatar-small(src='{{commitInfo.committer.avatar_url}}', width='20', style='margin-right: 10px;')
+                            span.label.label-default {{commitInfo.commit.author.name}}
+                    .form-group
+                        label.col-sm-3.control-label Date
+                        .col-sm-9
+                          .checkbox
+                            span(am-time-ago='commitInfo.commit.author.date')
+                    .form-group
+                        label.col-sm-3.control-label Message
+                        .col-sm-9
+                          .checkbox
+                            | {{commitInfo.commit.message}}
+
+              .table-responsive
+                table.table.table-striped.table-hover.table-condensed(ng-table='tableParams', show-filter='true')
+                  caption
+                    h3 Last 100 commits
+                  tr(ng-repeat='info in $data')
+                    td.col-sm-1.col-md-1.col-lg-1(data-title="'Author'", sortable="'commit.author.name'", commit-author)
+                    td.col-sm-2.col-md-2.col-lg-2(data-title="'Date'", am-time-ago='info.commit.author.date', sortable="'commit.author.date'")
+                    td(data-title="'Message'", filter="{'message': 'text'}", commit-message)
+
+
+
             .form-filled(ng-show='formFilled')
               | form filled
 

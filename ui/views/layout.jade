@@ -31,7 +31,7 @@ html
                   span.label.label-default #{user.displayName}
                   | &nbsp;
                   a.btn.btn-danger.btn-xs(href='/logout') Logout
-                  img(src=user.gravatarLink, width='20', style='border-radius: 3px; margin-left: 10px;')
+                  img.gravatar-small(src=user.gravatarLink, width='20', style='margin-left: 10px;')
             else
               .navbar-form.navbar-right
                  a.btn.btn-success(href='/auth/google', role='button') Sign in

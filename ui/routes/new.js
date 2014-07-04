@@ -98,10 +98,10 @@ router.get('/getEnvironments', function(req, res) {
   });
 });
 
-/* GET github repository website available environments */
+/* GET retrieve the commit info */
 router.get('/getCommit', function(req, res) {
-  var user    = req.query.user,
-      sha     = req.query.sha;
+  var user = req.query.user,
+      sha  = req.query.sha;
 
   github.repos.getCommit({
     user: user,
@@ -109,6 +109,29 @@ router.get('/getCommit', function(req, res) {
     sha:  sha
   }, function(err, results) {
     res.json(results);
+  });
+});
+
+/* GET get the list of commits */
+router.get('/getCommits', function(req, res) {
+  var user = req.query.user,
+      sha  = req.query.sha,
+      page = req.query.page || 1;
+
+  github.repos.getCommits({
+    user:     user,
+    repo:     repo,
+    sha:      sha,
+    per_page: 100,
+    page:     page
+  }, function(err, results) {
+    if (results) {
+      results.forEach(function(o) {
+        // workaround: ng-table doesn't support filtering on sub members
+        o.message = o.commit.message;
+      });
+      res.json(results);
+    }
   });
 });
 
