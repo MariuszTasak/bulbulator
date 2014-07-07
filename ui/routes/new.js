@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var async = require('async');
 
 // connect to github
 var repo = 'Nexway-3.0';
@@ -11,9 +12,9 @@ var github = new GitHubApi({
   timeout: 500
 });
 github.authenticate({
-  type: 'basic',
-  username: 'nexwaybot',
-  password: 'Nexwaybot14'
+  type     : 'basic',
+  username : 'nexwaybot',
+  password : 'Nexwaybot14'
 });
 
 var mysql      = require('mysql');
@@ -29,9 +30,32 @@ connection.query('USE bulbulator');
 
 /* GET new page. */
 router.get('/', function(req, res) {
-  connection.query('SELECT * FROM environments', function(err, rows) {
-    res.render('new', { environments : rows });
+  async.parallel([
+    function(callback) {
+      connection.query('SELECT * FROM environments', function(err, rows) {
+        callback(null, rows);
+      });
+    },
+    function(callback) {
+      connection.query('SELECT * FROM servers', function(err, rows) {
+        callback(null, rows);
+      });
+    }
+  ], function(err, results) {
+    res.render('new', {
+      environments : results[0],
+      servers      : results[1]
+    });
   });
+});
+
+/* POST new page. */
+router.post('/', function(req, res) {
+  console.log(req.body);
+  // expectations:
+  // 1. bulbulator.sh always in /var/www
+  // 2. user bulbulator always exists on the host server with the same password
+  // 3. remote server
 });
 
 /* GET github forks */

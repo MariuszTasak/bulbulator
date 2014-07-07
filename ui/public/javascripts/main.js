@@ -52,7 +52,7 @@ app.controller('NewEnvironmentCtrl', [
     $scope, $filter, ngTableParams,
     BBL_CONSTANT
   ) {
-
+    $scope.servers    = window.servers;
     $scope.formFilled = false;
     $scope.commits    = [];
 
@@ -179,17 +179,18 @@ app.controller('NewEnvironmentCtrl', [
   }
 ]).directive('commitAuthor', function() {
   function link(scope, element, attrs) {
-    var author = scope.info.committer.login.substr(0, 3).toUpperCase();
+    var author = scope.info.commit.committer.email.substr(0, 3).toUpperCase();
     scope.info.author = author;
   }
   return {
     link: link,
-    template: '<img src="{{info.committer.avatar_url}}" width="20" class="gravatar-small"> {{info.author}}'
+    template: '<img src="{{info.committer.avatar_url}}" width="20" class="gravatar-small"> <span class="label label-default">{{info.author}}</label>'
   };
 }).directive('commitMessage', function(BBL_CONSTANT) {
   function link(scope, element, attrs) {
     var message = scope.info.message;
-    message = message.replace(/kid\-(\d+)/ig, '<a href="'+BBL_CONSTANT.JIRA_BROWSER_URL+'KID-$1" target="_blank">KID-$1</a>');
+    message = message.replace(/kid\-(\d+)/ig, '<a href="'+BBL_CONSTANT.JIRA_BROWSER_URL+'KID-$1" data-jira="KID-$1" target="_blank">KID-$1</a>');
+    message = message.replace(/kid\-(\d+)/ig, '<a href="'+BBL_CONSTANT.JIRA_BROWSER_URL+'KIF-$1" data-jira="KIF-$1" target="_blank">KIF-$1</a>');
     element.html(message);
   }
   return {
