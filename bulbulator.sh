@@ -17,7 +17,7 @@ Usage:
         -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl --with-db-drop [--domain-separator \"-\"]
 
 It will be installed in $BASE_SETUP_DIR (check etc/bulbulator.config.sh.sample) and be accessible
-via http://WEBSITE.BRANCH.SUBDOMAIN (ie eset.s30.testing.nexwai.pl)
+via http://WEBSITE-BRANCH-SUBDOMAIN (ie eset-s30-testing.nexwai.pl)
 
 where
     REPOSITORY_URL    get if from github (git@github.com:NexwayGroup/Nexway-3.0.git)
@@ -29,7 +29,7 @@ where
                       testing.nexwai.pl and demo.nexwai.pl (define vhosts to have more)
     DOMAIN_SEPARATOR  domain separator by default "-"
 
-3. Delete exdisting environment:
+3. Delete existing environment:
    . etc/bulbulator.config.sh && bash bulbulator.sh -b BRANCH -w WEBSITE --drop-env
 "
 }
@@ -124,6 +124,11 @@ while test $# -gt 0; do
         --hook-deletion-url)
             shift
             export HOOK_DELETION_URL=$1
+            shift
+            ;;
+        --with-editable)
+            shift
+            export EDITABLE=true
             shift
             ;;
         --with-db-drop)
@@ -244,63 +249,68 @@ fi
 
 print_msg "Step: Download repository $REPOSITORY_URL to $SETUP_DIR"
 
-## Cache repo!!
-TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
-if [ ! -d "$TMP_REPO" ]; then
-    git clone $REPOSITORY_URL $TMP_REPO --mirror
-fi
-cd $TMP_REPO
-git remote update # update all refs (--mirror check out git man page for details)
+if [ ! -z "$EDITABLE" ]; then
+    git clone $REPOSITORY_URL $SETUP_DIR
+else
+    ## Cache repo!!
+    TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
+    if [ ! -d "$TMP_REPO" ]; then
+        git clone $REPOSITORY_URL $TMP_REPO --mirror --depth 1
+    fi
+    cd $TMP_REPO
+    git remote update # update all refs (--mirror check out git man page for details)
+    ## END cache repo
 
-## END cache repo
+    if [ -L "$SETUP_DIR_LINK" ]; then
+        print_msg "Step: Copy old instance from symbolic link"
+        # we are not able to use "cp -RL" (nested media symlink)
+        dir_to_copy=`readlink -f "$SETUP_DIR_LINK"`
+        if [ -d $dir_to_copy ]; then
+            cp -R "$dir_to_copy" "$SETUP_DIR" 2>/dev/null
+        else
+            print_msg "Error! Cannot copy old instance of Magento from symbolic link which points to $dir_to_copy"
+            exit 1;
+        fi
 
-if [ -L "$SETUP_DIR_LINK" ]; then
-    print_msg "Step: Coping old instance from sybolic link"
-    # we are not able to use "cp -RL" (nested media symlink)
-    dir_to_copy=`readlink -f "$SETUP_DIR_LINK"`
-    if [ -d $dir_to_copy ]; then
-        cp -R "$dir_to_copy" "$SETUP_DIR" 2>/dev/null
+        print_msg "Step: Update git"
+        cd $SETUP_DIR
+        git_update
+        cd -
+    elif [ -d "$SETUP_DIR_LINK" ]; then
+        print_msg "Step: Copy old instance"
+        cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
+
+        print_msg "Step: Update git"
+        cd $SETUP_DIR
+        git_update
+        cd -
     else
-        print_msg "Error! Cannot copy old instance of Magento from sumbolic link which points to $dir_to_copy"
-        exit 1;
+        print_msg "Step: Cloning repo"
+        git clone $TMP_REPO $SETUP_DIR || { print_msg "Error! Cannot clone repo"; exit 1; }
     fi
 
-    print_msg "Step: update git"
     cd $SETUP_DIR
-    git_update
-    cd -
-elif [ -d "$SETUP_DIR_LINK" ]; then
-    print_msg "Step: Coping old instance"
-    cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
 
-    print_msg "Step: update git"
-    cd $SETUP_DIR
-    git_update
-    cd -
-else
-    print_msg "Step: Cloning repo"
-    git clone $TMP_REPO $SETUP_DIR || { print_msg "Error! Cannot clone repo"; exit 1; }
+    git stash save "check blb, can't update repo if local changes"
+    for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
+        git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
+    done
+
+    ## there can be issues when once used example.com/repo.git and other times example.com/repo (no .git)
+     # in such cases updated TMP_REPO will be different than remote origin, and no update will happen!
+    git remote rm origin
+    git remote add origin $TMP_REPO
 fi
 
 cd $SETUP_DIR
 
-git stash save "check blb, can't update repo if local changes"
-for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
-    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
-done
-
 print_msg "Step: checkout to branch - $BRANCH"
-
-## there can be issues when once used example.com/repo.git and other times example.com/repo (no .git)
- # in such cases updated TMP_REPO will be different than remote origin, and no update will happen!
-git remote rm origin
-git remote add origin $TMP_REPO
 
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
     echo "";
-    echo "ERROR! Branch you're trying to get is not compatible with the new version of bulbulator
-please merge with latest main branch."
+    echo "ERROR! The branch you're trying to checkout is not compatible with the new version of Bulbulator
+please merge with the latest main branch."
     exit 1;
 fi
 

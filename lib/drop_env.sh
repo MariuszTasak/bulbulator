@@ -1,4 +1,5 @@
-confirm() {
+confirm()
+{
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
     case $response in
@@ -22,8 +23,8 @@ drop_database_and_remove_files()
         # remove symbolic link
         rm $SETUP_DIR_LINK
 
-        #remove all directories
-        rm -rf $SETUP_DIR_LINK*
+        # remove all directories
+        rm -Rf $SETUP_DIR_LINK*
 
         # remove branch dir if empty
         if [ ! "$(ls -A $SETUP_BRANCH_BASE_DIR)" ]; then
@@ -41,6 +42,20 @@ print_files_to_remove()
         for i in `ls -d $SETUP_DIR_LINK*`; do echo "  -- "$i; done;
     else
         print_msg "No files to remove"
+    fi
+}
+
+notify_deletion()
+{
+    if [ -n "$SEND_NOTIFICATION" ]; then
+        print_msg "Step: Notify the centrale."
+
+        ENV_HASH=`cat $SETUP_DIR_LINK/.bulbulator.json | php -r 'echo json_decode(fgets(STDIN))->env_hash;'`
+
+        curl -X POST --insecure \
+            --connect-timeout 2 \
+            --data-urlencode "env_hash=$ENV_HASH" \
+            $HOOK_DELETION_URL
     fi
 }
 
@@ -69,6 +84,7 @@ drop_environment()
     confirm "Would you really like to drop this instance? [y/N]"
 
     if [ $? -eq 0 ]; then
+        notify_deletion
         drop_database_and_remove_files
     else
         print_msg "Command aborted by user."
