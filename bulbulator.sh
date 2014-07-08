@@ -182,7 +182,7 @@ fi
 if [ -z "$DOMAIN_SEPARATOR" ]; then
     export DOMAIN_SEPARATOR="-"
 fi
-if [[ -z "$SEND_NOTIFICATION" ] ]; then
+if [ -z "$SEND_NOTIFICATION" ]; then
     export SEND_NOTIFICATION=true
 fi
 if [ -z "$HOOK_CREATION_URL" ]; then
@@ -255,7 +255,7 @@ else
     ## Cache repo!!
     TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
     if [ ! -d "$TMP_REPO" ]; then
-        git clone $REPOSITORY_URL $TMP_REPO --mirror --depth 1
+        git clone $REPOSITORY_URL $TMP_REPO --mirror
     fi
     cd $TMP_REPO
     git remote update # update all refs (--mirror check out git man page for details)
