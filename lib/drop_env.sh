@@ -50,7 +50,7 @@ notify_deletion()
     if [ -n "$SEND_NOTIFICATION" ]; then
         print_msg "Step: Notify the centrale."
 
-        ENV_HASH=`cat $SETUP_DIR_LINK/.bulbulator.json | php -r 'echo json_decode(fgets(STDIN))->env_hash;'`
+        ENV_HASH=`cat $SETUP_DIR_LINK/.bulbulator.json | php -r 'echo json_decode(file_get_contents("php://stdin"))->env_hash;'`
 
         curl -X POST --insecure \
             --connect-timeout 2 \
