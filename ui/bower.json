@@ -19,6 +19,10 @@
     "tests"
   ],
   "dependencies": {
-    "moment": "~2.7.0"
+    "moment": "~2.7.0",
+    "angular-latest": "~1.2.19",
+    "angular-moment": "~0.7.1",
+    "angular-bootstrap": "~0.11.0",
+    "ng-table": "~0.3.3"
   }
 }

@@ -17,7 +17,7 @@ Usage:
         -b bulbulator-split -w eset -e prep -w demo1.gpawlik.nexwai.pl --with-db-drop [--domain-separator \"-\"]
 
 It will be installed in $BASE_SETUP_DIR (check etc/bulbulator.config.sh.sample) and be accessible
-via http://WEBSITE.BRANCH.SUBDOMAIN (ie eset.s30.testing.nexwai.pl)
+via http://WEBSITE-BRANCH-SUBDOMAIN (ie eset-s30-testing.nexwai.pl)
 
 where
     REPOSITORY_URL    get if from github (git@github.com:NexwayGroup/Nexway-3.0.git)
@@ -28,6 +28,9 @@ where
                       when using on prep.nexwai.pl available are:
                       testing.nexwai.pl and demo.nexwai.pl (define vhosts to have more)
     DOMAIN_SEPARATOR  domain separator by default "-"
+
+3. Delete existing environment:
+   . etc/bulbulator.config.sh && bash bulbulator.sh -b BRANCH -w WEBSITE --drop-env
 "
 }
 
@@ -47,7 +50,7 @@ print_error()
 
 illegal_char_replace()
 {
-	echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
+    echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
 }
 
 get_current_timestamp()
@@ -64,14 +67,12 @@ git_update()
 }
 
 script_dir=$(cd `dirname $0` && pwd)
-#if [ ! -f $script_dir/etc/bulbulator.config.sh ]; then
-#	echo 'Missing configuration file (etc/bulbulator.config.sh).'
-#	echo 'Please review a etc/bulbulator.config.sh.sample for futher informations.'
-#	show_usage
-#	exit 1
-#fi
 
-# . $script_dir/etc/bulbulator.config.sh
+# bulbulator cannot be run as root
+if [[ $EUID == "0" ]]; then
+   echo "Running Bulbulator as root is forbidden" 1>&2
+   exit 1
+fi
 
 while test $# -gt 0; do
     case "$1" in
@@ -83,7 +84,7 @@ while test $# -gt 0; do
         -b|--branch)
             shift
             export BRANCH=$1
-			shift
+            shift
             ;;
         -c|--commit)
             shift
@@ -110,9 +111,33 @@ while test $# -gt 0; do
             export DOMAIN_SEPARATOR=$1
             shift
             ;;
+        --without-notification)
+            shift
+            export SEND_NOTIFICATION=false
+            shift
+            ;;
+        --hook-creation-url)
+            shift
+            export HOOK_CREATION_URL=$1
+            shift
+            ;;
+        --hook-deletion-url)
+            shift
+            export HOOK_DELETION_URL=$1
+            shift
+            ;;
+        --with-editable)
+            shift
+            export EDITABLE=true
+            shift
+            ;;
         --with-db-drop)
             shift
             export DROP_DB=true
+            ;;
+        --drop-env)
+            shift
+            export DROP_ENV=true
             ;;
         *)
             break
@@ -131,33 +156,44 @@ done
 #echo $DROP_DB
 #exit
 
-if [ -z "$REPOSITORY_URL" ]; then
-    echo "(-r) Repository url param is missing"
-    show_usage
-    exit 1
+if [ -z "$SUB_DOMAIN" ]; then
+    export SUB_DOMAIN="testing.nexwai.pl"
 fi
+
+if [ -z "$DOMAIN_SEPARATOR" ]; then
+    export DOMAIN_SEPARATOR="-"
+fi
+
 if [ -z "$BRANCH" ]; then
     echo "(-b) Branch param is missing"
     show_usage
     exit 1
 fi
-if [ -z "$ENV_NAME" ]; then
-    echo "(-e [prep|prod]) Env name param is missing"
-    show_usage
-    exit 1
-fi
+
 if [ -z "$WEBSITE" ]; then
     echo "(-w) Website param is missing"
     show_usage
     exit 1
 fi
+
 if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
 fi
 if [ -z "$DOMAIN_SEPARATOR" ]; then
     export DOMAIN_SEPARATOR="-"
 fi
+if [ -z "$SEND_NOTIFICATION" ]; then
+    export SEND_NOTIFICATION=true
+fi
+if [ -z "$HOOK_CREATION_URL" ]; then
+    export HOOK_CREATION_URL="https://bulbulator.nexwai.pl/hooks/creation"
+fi
+if [ -z "$HOOK_DELETION_URL" ]; then
+    export HOOK_DELETION_URL="https://bulbulator.nexwai.pl/hooks/deletion"
+fi
 
+export SETUP_BRANCH_BASE_DIR="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`"
+export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
 export SETUP_DIR_LINK="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`/`illegal_char_replace $WEBSITE '-'`"
 export SETUP_DIR=$SETUP_DIR_LINK-`get_current_timestamp`
 
@@ -166,7 +202,24 @@ export DOMAIN=`illegal_char_replace $BRANCH '-'`
 export STORE_URL="http://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 export STORE_URL_SECURE="https://"${WEBSITE}${DOMAIN_SEPARATOR}${DOMAIN}${DOMAIN_SEPARATOR}${SUB_DOMAIN}"/"
 
-export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
+# drop environment if option --drop-env exists
+if [ -n "$DROP_ENV" ]; then
+    source $script_dir/lib/drop_env.sh
+    drop_environment
+    exit 0;
+fi
+
+if [ -z "$ENV_NAME" ]; then
+    echo "(-e [prep|prod]) Env name param is missing"
+    show_usage
+    exit 1
+fi
+
+if [ -z "$REPOSITORY_URL" ]; then
+    echo "(-r) Repository url param is missing"
+    show_usage
+    exit 1
+fi
 
 # exit if environment exist
 #if [ -d "$SETUP_DIR" ]; then
@@ -196,64 +249,69 @@ fi
 
 print_msg "Step: Download repository $REPOSITORY_URL to $SETUP_DIR"
 
-## Cache repo!!
-TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
-if [ ! -d "$TMP_REPO" ]; then
-    git clone $REPOSITORY_URL $TMP_REPO --mirror
-fi
-cd $TMP_REPO
-git remote update # update all refs (--mirror check out git man page for details)
+if [ ! -z "$EDITABLE" ]; then
+    git clone $REPOSITORY_URL $SETUP_DIR
+else
+    ## Cache repo!!
+    TMP_REPO=/tmp/.`illegal_char_replace $REPOSITORY_URL '_'`
+    if [ ! -d "$TMP_REPO" ]; then
+        git clone $REPOSITORY_URL $TMP_REPO --mirror
+    fi
+    cd $TMP_REPO
+    git remote update # update all refs (--mirror check out git man page for details)
+    ## END cache repo
 
-## END cache repo
+    if [ -L "$SETUP_DIR_LINK" ]; then
+        print_msg "Step: Copy old instance from symbolic link"
+        # we are not able to use "cp -RL" (nested media symlink)
+        dir_to_copy=`readlink -f "$SETUP_DIR_LINK"`
+        if [ -d $dir_to_copy ]; then
+            cp -R "$dir_to_copy" "$SETUP_DIR" 2>/dev/null
+        else
+            print_msg "Error! Cannot copy old instance of Magento from symbolic link which points to $dir_to_copy"
+            exit 1;
+        fi
 
-if [ -L "$SETUP_DIR_LINK" ]; then
-    print_msg "Step: Coping old instance from sybolic link"
-    # we are not able to use "cp -RL" (nested media symlink)
-    dir_to_copy=`readlink -f "$SETUP_DIR_LINK"`
-    if [ -d $dir_to_copy ]; then
-        cp -R "$dir_to_copy" "$SETUP_DIR" 2>/dev/null
+        print_msg "Step: Update git"
+        cd $SETUP_DIR
+        git_update
+        cd -
+    elif [ -d "$SETUP_DIR_LINK" ]; then
+        print_msg "Step: Copy old instance"
+        cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
+
+        print_msg "Step: Update git"
+        cd $SETUP_DIR
+        git_update
+        cd -
     else
-        print_msg "Error! Cannot copy old instance of Magento from sumbolic link which points to $dir_to_copy"
-        exit 1;
+        print_msg "Step: Cloning repo"
+        git clone $TMP_REPO $SETUP_DIR || { print_msg "Error! Cannot clone repo"; exit 1; }
     fi
 
-    print_msg "Step: update git"
     cd $SETUP_DIR
-    git_update
-    cd -
-elif [ -d "$SETUP_DIR_LINK" ]; then
-    print_msg "Step: Coping old instance"
-    cp -R "$SETUP_DIR_LINK" "$SETUP_DIR"
-    
-    print_msg "Step: update git"
-    cd $SETUP_DIR
-    git_update
-    cd -
-else
-    print_msg "Step: Cloning repo"
-    git clone $TMP_REPO $SETUP_DIR || { print_msg "Error! Cannot clone repo"; exit 1; }
+
+    git stash save "check blb, can't update repo if local changes"
+    for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
+        git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
+    done
+
+    ## there can be issues when once used example.com/repo.git and other times example.com/repo (no .git)
+     # in such cases updated TMP_REPO will be different than remote origin, and no update will happen!
+    git remote rm origin
+    git remote add origin $TMP_REPO
 fi
 
 cd $SETUP_DIR
 
-git stash save "check blb, can't update repo if local changes"
-for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v develop`; do
-    git branch --track ${branch##*/} $branch 2> /dev/null # when branches are already there - we don't want him complain
-done
-
 print_msg "Step: checkout to branch - $BRANCH"
-
-## there can be issues when once used example.com/repo.git and other times example.com/repo (no .git)
- # in such cases updated TMP_REPO will be different than remote origin, and no update will happen!
-git remote rm origin
-git remote add origin $TMP_REPO
 
 git checkout $BRANCH || { print_msg "Error! Git checkout failed!" ; exit 1; }
 if [ ! -f ./shell/bulbulator/bulbulate.sh ]; then
-	echo "";
-	echo "ERROR! Branch you're trying to get is not compatibile with new version of bulbulator
-please merge with latest main branch."	
-	exit 1;    
+    echo "";
+    echo "ERROR! The branch you're trying to checkout is not compatible with the new version of Bulbulator
+please merge with the latest main branch."
+    exit 1;
 fi
 
-./shell/bulbulator/bulbulate.sh 
+./shell/bulbulator/bulbulate.sh

@@ -5,14 +5,55 @@ html
     meta(charset='utf-8')
     meta(name='viewport', content='width=device-width', initial-scale='1', maximum-scale='1', user-scalable='no')
     link(rel='stylesheet', href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
-  body
-    .container
-      .page-header
-        h1 Bulbulator
-        p.lead Manage the Bulbulated environments.
+    link(rel='stylesheet', href='components/ng-table/ng-table.min.css')
+    link(rel='stylesheet', href='stylesheets/main.css')
 
-      block content
+  body(ng-app='bulbulatorApp')
+    .navbar.navbar-inverse.navbar-fixed-top(role='navigation')
+      .container
+          .navbar-header
+            button.navbar-toggle(type='button', data-toggle='collapse', data-target='.navbar-collapse')
+              span.sr-only Toggle navigation
+              span.icon-bar
+              span.icon-bar
+              span.icon-bar
+            a.navbar-brand(href='/') Bulbulator
+          .navbar-collapse.collapse
+            ul.nav.navbar-nav
+              li
+                a(href='/environments') List
+              li
+                a(href='/new') New
+            if user
+              .navbar-right
+                p.navbar-text
+                  | Identified as &nbsp;
+                  span.label.label-default #{user.displayName}
+                  | &nbsp;
+                  a.btn.btn-danger.btn-xs(href='/logout') Logout
+                  img.gravatar-small(src=user.gravatarLink, width='20', style='margin-left: 10px;')
+            else
+              .navbar-form.navbar-right
+                 a.btn.btn-success(href='/auth/google', role='button') Sign in
+
+    if error_messages.length > 0 || success_messages.length > 0 || warning_messages.length > 0 || info_messages.length > 0
+      .container
+        br
+        each error in error_messages
+          .alert.alert-danger= error
+        each success in success_messages
+          .alert.alert-success= success
+        each warning in warning_messages
+          .alert.alert-warning= warning
+        each info in info_messages
+          .alert.alert-info= info
+
+    block content
 
     script(src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js')
-    script(src='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js')
-    script(src='components/moment/min/moment-with-langs.min.js')
+    script(src='components/angular/angular.min.js')
+    script(src='components/angular-bootstrap/ui-bootstrap-tpls.min.js')
+    script(src='components/moment/min/moment.min.js')
+    script(src='components/angular-moment/angular-moment.js')
+    script(src='components/ng-table/ng-table.min.js')
+    script(src='javascripts/main.js')

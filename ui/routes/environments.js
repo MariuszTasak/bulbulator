@@ -12,10 +12,10 @@ connection.connect();
 // connect to DB
 connection.query('USE bulbulator');
 
-/* GET home page. */
+/* GET environments page. */
 router.get('/', function(req, res) {
   connection.query('SELECT * FROM environments', function(err, rows) {
-    res.render('index', { environments : rows });
+    res.render('environments', { environments : rows });
   });
 });
 

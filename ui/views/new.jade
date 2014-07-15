@@ -1,0 +1,93 @@
+extends layout
+
+block content
+  .container
+    div(ng-controller='NewEnvironmentCtrl')
+      .page-header
+        h1 Deploy a new environment
+
+      .row
+        .col-md-5
+
+          form.form-horizontal(role='form', method='post', action='/new')
+              .form-group
+                  label.col-sm-3.control-label(for='repository') Repository
+                  .col-sm-6
+                    select#repository.form-control(name='repository', ng-model='repository', ng-options='s.owner.login for s in repositories', ng-change='load.branches(repository);', ng-disabled='!repositories')
+                      option(value='') -- choose repository --
+              .form-group
+                  label.col-sm-3.control-label(for='branch') Branch
+                  .col-sm-6
+                    select#branch.form-control(name='branch', ng-model='branch', ng-options='s.name for s in branches', ng-disabled='!branches', ng-change='commit=branch.commit.sha')
+                      option(value='') -- choose branch --
+              .form-group
+                  label.col-sm-3.control-label(for='commit') Commit
+                  .col-sm-9
+                    input#commit.form-control(type='text', name='commit', ng-model='commit', ng-disabled='!branch', ng-value='branch.commit.sha')
+              .form-group
+                  label.col-sm-3.control-label(for='website') Website
+                  .col-sm-6
+                    select#website.form-control(name='website', ng-model='website', ng-options='s.name for s in websites', ng-change='load.environments(repository, commit, website);', ng-disabled='!websites')
+                      option(value='') -- choose website --
+              .form-group
+                  label.col-sm-3.control-label(for='environment') Environment
+                  .col-sm-6
+                    select#environment.form-control(name='environment', disabled, ng-model='environment', ng-options='s.name for s in environments')
+                      option(value='') -- choose environment --
+              .form-group
+                  label.col-sm-3.control-label(for='environment') Server
+                  .col-sm-6
+                    select#environment.form-control(ng-model='server', ng-options='s.hostname for s in servers track by s.hostname', ng-disabled='!environment')
+                      option(value='') -- choose server --
+
+              .form-group
+                .col-sm-offset-3.col-sm-10
+                  .checkbox
+                    label
+                      input(type='checkbox', name='send-email')
+                      | Send me an email once the environment will be up
+              .form-group
+                .col-sm-offset-3.col-sm-10
+                  button.btn.btn-success(type='submit') Deploy
+        .col-md-7
+          .desc
+            .commit-selected(ng-show='commitInfo')
+              .panel.panel-info
+                .panel-heading
+                  h3.panel-title Latest Commit Info
+                .panel-body
+                  .form-horizontal
+                    .form-group
+                        label.col-sm-3.control-label Author
+                        .col-sm-9
+                          .checkbox
+                            img.gravatar-small(src='{{commitInfo.committer.avatar_url}}', width='20', style='margin-right: 10px;')
+                            span.label.label-default {{commitInfo.commit.author.name}}
+                    .form-group
+                        label.col-sm-3.control-label Date
+                        .col-sm-9
+                          .checkbox
+                            span(am-time-ago='commitInfo.commit.author.date')
+                    .form-group
+                        label.col-sm-3.control-label Message
+                        .col-sm-9
+                          .checkbox
+                            | {{commitInfo.commit.message}}
+
+              .table-responsive
+                table.table.table-striped.table-hover.table-condensed(ng-table='tableParams', show-filter='true')
+                  caption
+                    h3 Last 100 commits
+                  tr(ng-repeat='info in $data')
+                    td.col-sm-1.col-md-1.col-lg-1(data-title="'Author'", sortable="'commit.author.name'", commit-author)
+                    td.col-sm-2.col-md-2.col-lg-2(data-title="'Date'", am-time-ago='info.commit.author.date', sortable="'commit.author.date'")
+                    td.col-sm-6.col-md-6.col-lg-6(data-title="'Message'", filter="{'message': 'text'}", commit-message)
+
+
+
+            .form-filled(ng-show='formFilled')
+              | form filled
+
+  script.
+    window.environments = !{JSON.stringify(environments)};
+    window.servers      = !{JSON.stringify(servers)};

@@ -29,6 +29,7 @@ deploy
 
 # Bower directory
 bower_components
+ui/public/components
 
 # Temp dirs
 .tmp
