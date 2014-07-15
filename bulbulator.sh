@@ -228,8 +228,6 @@ fi
 #    exit 1
 #fi
 
-echo "foooo"
-echo $BASE_SETUP_DIR
 # create base setup dir if not exist e.g /var/www/testing/
 if [ ! -d "$BASE_SETUP_DIR" ]; then
     # check if we have permission to create "testing" directory
