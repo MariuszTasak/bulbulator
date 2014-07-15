@@ -1,7 +1,7 @@
 <project name="Nexway Bulbulator" default="baby-steps">
 
     <target name="baby-steps"
-        depends="install,check,uninstall"
+        depends="install,uninstall"
         />
 
     <target name="prepare" description="Set the environment variables">
