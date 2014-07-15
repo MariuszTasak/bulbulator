@@ -18,7 +18,7 @@
         </exec>
     </target>
 
-    <target name="install" depends="install" description="Install the environment">
+    <target name="install" depends="prepare" description="Install the environment">
         <exec executable="bash" failonerror="true">
             <arg line="./bulbulator.sh" />
         </exec>
