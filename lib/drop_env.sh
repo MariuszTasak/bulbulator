@@ -12,25 +12,27 @@ confirm()
     esac
 }
 
+drop_db()
+{
+    mysql -h $MYSQL_DB_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD -e "drop database IF EXISTS $MYSQL_DB_NAME" || { print_msg "Error! Drop database $MYSQL_DB_NAME command failed!" ; }
+}
+
 drop_database_and_remove_files()
 {
-    print_msg "Step: Dropping database"
-    mysql -h $MYSQL_DB_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD -e "drop database IF EXISTS $MYSQL_DB_NAME" || { print_msg "Error! Drop database $MYSQL_DB_NAME command failed!" ; }
-
-    print_msg "Step: Removing directories"
 
     if [ -h "$SETUP_DIR_LINK" ]; then
-        # remove symbolic link
-        rm $SETUP_DIR_LINK
-
-        # remove all directories
-        rm -Rf $SETUP_DIR_LINK*
+    	print_msg "Step: Dropping database and removing directories"
+        # drop database remove symbolic link  remove all directories
+        drop_db & rm $SETUP_DIR_LINK & rm -rf $SETUP_DIR_LINK*
 
         # remove branch dir if empty
         if [ ! "$(ls -A $SETUP_BRANCH_BASE_DIR)" ]; then
             print_msg "Removing empty branch dir: $SETUP_BRANCH_BASE_DIR"
             rmdir $SETUP_BRANCH_BASE_DIR
         fi
+	else
+    	print_msg "Step: Dropping database" 
+		drop_db
     fi
 
     print_msg "-->> Bulbulator: I've done all the work for you!"
