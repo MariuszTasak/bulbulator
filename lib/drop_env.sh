@@ -95,6 +95,7 @@ drop_environment()
 	        drop_database_and_remove_files
 	    else
 	        print_msg "Command aborted by user."
+	        exit 1
 	    fi
     fi
 }
