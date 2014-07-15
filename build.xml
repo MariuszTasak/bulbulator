@@ -1,7 +1,7 @@
 <project name="Nexway Bulbulator" default="baby-steps">
 
     <target name="baby-steps"
-        depends="install,uninstall"
+        depends="install,check,uninstall"
         />
 
     <target name="prepare" description="Set the environment variables">
@@ -16,9 +16,9 @@
         </exec>
     </target>
 
-    <target name="check" depends="install" description="Uninstall the environment">
+    <target name="check" depends="install" description="Checks that the environment is accessible">
         <exec executable="bash" failonerror="true">
-            <arg line="./bulbulator.sh --drop-env" />
+            <arg line="curl --output /dev/null --silent --head --fail '$STORE_URL_SECURE'" />
         </exec>
     </target>
 
