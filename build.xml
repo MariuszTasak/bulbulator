@@ -1,7 +1,7 @@
 <project name="Nexway Bulbulator" default="baby-steps">
 
     <target name="baby-steps"
-        depends="prepare,install,uninstall"
+        depends="install,uninstall"
         />
 
     <target name="prepare" description="Set the environment variables">
@@ -10,7 +10,7 @@
         </exec>
     </target>
 
-    <target name="install" depends="prepare" description="Install the environment">
+    <target name="install" depends="" description="Install the environment">
         <exec executable="bash" failonerror="true">
             <arg line="./bulbulator.sh" />
         </exec>
