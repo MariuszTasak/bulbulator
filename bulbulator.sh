@@ -191,6 +191,9 @@ fi
 if [ -z "$HOOK_DELETION_URL" ]; then
     export HOOK_DELETION_URL="https://bulbulator.nexwai.pl/hooks/deletion"
 fi
+if [ -z "$IS_JENKINS" ]; then
+    export IS_JENKINS=false
+fi
 
 export SETUP_BRANCH_BASE_DIR="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`"
 export MYSQL_DB_NAME="$MYSQL_DB_PREFIX`illegal_char_replace $BRANCH '_'`_`illegal_char_replace $WEBSITE '-'`"
