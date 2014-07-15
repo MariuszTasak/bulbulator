@@ -4,17 +4,9 @@
         depends="prepare,install,uninstall"
         />
 
-    <target name="js-unit-tests" description="Runs Javascript Unit tests via phantomjs and jasmine">
-        <property environment="env" />
-        <exec executable="phantomjs" failonerror="true">
-            <arg line="./js/jasmine/run-jasmine.js" />
-            <arg line="${env.KINETIC_URL}/js/checkout/test/index.html"/>
-        </exec>
-    </target>
-
     <target name="prepare" description="Set the environment variables">
         <exec executable="bash" failonerror="false">
-            <arg line=". ./configs/jenkins/common.sh" />
+            <arg line="./configs/jenkins/common.sh" />
         </exec>
     </target>
 
