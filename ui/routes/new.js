@@ -1,9 +1,26 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
+var crypto = require('crypto');
+
+// ssh connection
+var Connection = require('ssh2');
+
+// ansi-to-html converter
+var Convert = require('ansi-to-html');
+var convert = new Convert();
+
+// config
+var BULBULATOR_SSH_USER       = 'bulbulator',
+    BULBULATOR_SSH_PASSWORD   = 'wXmMVGCFxaZudT5B',
+    BULBULATOR_MYSQL_HOST     = 'localhost',
+    BULBULATOR_MYSQL_USER     = 'bulbulator',
+    BULBULATOR_MYSQL_PASSWORD = 'wXmMVGCFxaZudT5B',
+    MAIN_REPOSITORY_NAME      = 'Nexway-3.0',
+    GITHUB_USERNAME           = 'nexwaybot',
+    GITHUB_PASSWORD           = 'Nexwaybot14';
 
 // connect to github
-var repo = 'Nexway-3.0';
 var GitHubApi = require('github');
 var github = new GitHubApi({
   version: '3.0.0',
@@ -13,15 +30,16 @@ var github = new GitHubApi({
 });
 github.authenticate({
   type     : 'basic',
-  username : 'nexwaybot',
-  password : 'Nexwaybot14'
+  username : GITHUB_USERNAME,
+  password : GITHUB_PASSWORD
 });
 
+// connect to mysql
 var mysql      = require('mysql');
 var connection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'bulbulator',
-  password : 'wXmMVGCFxaZudT5B'
+  host     : BULBULATOR_MYSQL_HOST,
+  user     : BULBULATOR_MYSQL_USER,
+  password : BULBULATOR_MYSQL_PASSWORD
 });
 connection.connect();
 
@@ -51,18 +69,106 @@ router.get('/', function(req, res) {
 
 /* POST new page. */
 router.post('/', function(req, res) {
-  console.log(req.body);
+  var username    = req.body.repository,
+      branch      = req.body.branch,
+      commit      = req.body.commit,
+      website     = req.body.website,
+      environment = req.body.environment,
+      server      = req.body.server;
+
   // expectations:
-  // 1. bulbulator.sh always in /var/www
-  // 2. user bulbulator always exists on the host server with the same password
-  // 3. remote server
+  // 1. user bulbulator always exists on the host server with the same password
+  // 2. remote server
+
+  async.waterfall([
+      function(callback) {
+        connection.query('SELECT * FROM servers WHERE hostname = ?', [server], function(err, results) {
+          if (err) throw err;
+
+          if (results.length !== 1) {
+            throw new Error('Cannot find the server informations');
+          }
+
+          callback(null, results);
+        });
+      },
+      function(results, callback) {
+        var serverInfo = results[0];
+
+        // build the BBL command line
+        var bulbulatorCli = [
+          './bulbulator.sh',
+          '-r https://'+GITHUB_USERNAME+':'+GITHUB_PASSWORD+'@github.com/'+username+'/Nexway-3.0.git',
+          '-b '+branch,
+          '-c '+commit,
+          '-e '+environment,
+          '-w '+website,
+          '-s '+serverInfo.sub_domain
+        ].join(' ');
+
+        // build expected global variables
+        var bulbulatorVars = [
+          'export BASE_SETUP_DIR_TO_CHECK="'+serverInfo.base_setup_dir_to_check+'"',
+          'export BASE_SETUP_DIR="'+serverInfo.base_setup_dir+'"',
+          'export MEDIA_DIR="'+serverInfo.media_dir+'"',
+          'export MYSQL_USER="'+serverInfo.mysql_user+'"',
+          'export MYSQL_PASSWORD="'+serverInfo.mysql_password+'"',
+          'export MYSQL_DB_PREFIX="'+serverInfo.mysql_db_prefix+'"',
+          'export MYSQL_DB_HOST="'+serverInfo.mysql_host+'"'
+        ].join('; ');
+
+        // create unique hash per deployment
+        var hash = crypto.createHash('md5').update(bulbulatorCli+bulbulatorVars).digest('hex');
+
+        // connect to the destination server
+        var conn = new Connection();
+        conn.on('ready', function() {
+          console.log('Connection :: ready');
+
+          // execute BBL
+          conn.exec(bulbulatorVars+'; cd '+serverInfo.root_folder+' && '+bulbulatorCli, function(err, stream) {
+            if (err) throw err;
+            stream.on('exit', function(code, signal) {
+              console.log('Stream :: exit :: code: ' + code + ', signal: ' + signal);
+            }).on('close', function() {
+              console.log('Stream :: close');
+              conn.end();
+            }).on('data', function(data) {
+              console.log('STDOUT: ' + data);
+              // broadcast the BBLation infos
+              io.emit('bulbulator creation', {
+                stdout: convert.toHtml(''+data),
+                hash: hash,
+                cli: bulbulatorCli,
+                vars: bulbulatorVars
+              });
+            }).stderr.on('data', function(data) {
+              console.log('STDERR: ' + data);
+            });
+          });
+        }).connect({
+          host: serverInfo.ip,
+          port: serverInfo.ssh_port,
+          username: BULBULATOR_SSH_USER,
+          password: BULBULATOR_SSH_PASSWORD,
+          pingInterval: 5000
+        });
+
+        callback(null, 'done');
+      }
+  ], function (err, result) {
+     if (result === 'done') {
+        req.flash('success', 'The environment is currently being bulbulated. Please wait 5 mins.');
+        res.redirect('/');
+     }
+  });
 });
 
 /* GET github forks */
 router.get('/getForks', function(req, res) {
   github.repos.getForks({
     user: 'NexwayGroup',
-    repo: repo,
+    repo: MAIN_REPOSITORY_NAME,
     sort: 'oldest'
   }, function(err, results) {
     res.json(results);
@@ -75,7 +181,7 @@ router.get('/getBranches', function(req, res) {
 
   github.repos.getBranches({
     user: user,
-    repo: repo,
+    repo: MAIN_REPOSITORY_NAME,
   }, function(err, results) {
     res.json(results);
   });
@@ -88,7 +194,7 @@ router.get('/getWebsites', function(req, res) {
 
   github.repos.getContent({
     user: user,
-    repo: repo,
+    repo: MAIN_REPOSITORY_NAME,
     ref:  ref,
     path: 'configuration'
   }, function(err, results) {
@@ -109,7 +215,7 @@ router.get('/getEnvironments', function(req, res) {
 
   github.repos.getContent({
     user: user,
-    repo: repo,
+    repo: MAIN_REPOSITORY_NAME,
     ref:  ref,
     path: 'configuration/'+website
   }, function(err, results) {
@@ -129,7 +235,7 @@ router.get('/getCommit', function(req, res) {
 
   github.repos.getCommit({
     user: user,
-    repo: repo,
+    repo: MAIN_REPOSITORY_NAME,
     sha:  sha
   }, function(err, results) {
     res.json(results);
@@ -144,7 +250,7 @@ router.get('/getCommits', function(req, res) {
 
   github.repos.getCommits({
     user:     user,
-    repo:     repo,
+    repo:     MAIN_REPOSITORY_NAME,
     sha:      sha,
     per_page: 100,
     page:     page

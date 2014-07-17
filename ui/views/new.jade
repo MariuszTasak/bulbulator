@@ -13,12 +13,12 @@ block content
               .form-group
                   label.col-sm-3.control-label(for='repository') Repository
                   .col-sm-6
-                    select#repository.form-control(name='repository', ng-model='repository', ng-options='s.owner.login for s in repositories', ng-change='load.branches(repository);', ng-disabled='!repositories')
+                    select#repository.form-control(name='repository', ng-model='repository', ng-options='s.owner.login for s in repositories track by s.owner.login', ng-change='load.branches(repository);', ng-disabled='!repositories')
                       option(value='') -- choose repository --
               .form-group
                   label.col-sm-3.control-label(for='branch') Branch
                   .col-sm-6
-                    select#branch.form-control(name='branch', ng-model='branch', ng-options='s.name for s in branches', ng-disabled='!branches', ng-change='commit=branch.commit.sha')
+                    select#branch.form-control(name='branch', ng-model='branch', ng-options='s.name for s in branches track by s.name', ng-disabled='!branches', ng-change='commit=branch.commit.sha')
                       option(value='') -- choose branch --
               .form-group
                   label.col-sm-3.control-label(for='commit') Commit
@@ -27,17 +27,17 @@ block content
               .form-group
                   label.col-sm-3.control-label(for='website') Website
                   .col-sm-6
-                    select#website.form-control(name='website', ng-model='website', ng-options='s.name for s in websites', ng-change='load.environments(repository, commit, website);', ng-disabled='!websites')
+                    select#website.form-control(name='website', ng-model='website', ng-options='s.name for s in websites track by s.name', ng-change='load.environments(repository, commit, website);', ng-disabled='!websites')
                       option(value='') -- choose website --
               .form-group
                   label.col-sm-3.control-label(for='environment') Environment
                   .col-sm-6
-                    select#environment.form-control(name='environment', disabled, ng-model='environment', ng-options='s.name for s in environments')
+                    select#environment.form-control(name='environment', disabled, ng-model='environment', ng-options='s.name for s in environments track by s.name')
                       option(value='') -- choose environment --
               .form-group
                   label.col-sm-3.control-label(for='environment') Server
                   .col-sm-6
-                    select#environment.form-control(ng-model='server', ng-options='s.hostname for s in servers track by s.hostname', ng-disabled='!environment')
+                    select#environment.form-control(name='server', ng-model='server', ng-options='s.hostname for s in servers track by s.hostname', ng-disabled='!environment')
                       option(value='') -- choose server --
 
               .form-group

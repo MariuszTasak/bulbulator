@@ -197,3 +197,24 @@ app.controller('NewEnvironmentCtrl', [
     link: link
   };
 });
+
+// socket.io
+(function() {
+  var socket = io();
+  var deploymentCount = {};
+  socket.on('bulbulator creation', function(broadcast) {
+    console.log(broadcast);
+    deploymentCount[broadcast.hash] = '';
+    logMessage(broadcast);
+  });
+
+  var logMessage = function(broadcast) {
+    var $deployment = $('li#nav-deployment');
+    if ($deployment.size() === 0) {
+      $('ul.navbar-nav').append('<li id="nav-deployment" data-toggle="popover" title="Popover title" data-content="And heres some amazing content. Its very engaging. Right?"><a href="#deployments">Deployments <span class="badge">1</span></a></li>');
+    } else {
+      // append to the popover
+      //$deployment.append(msg.stdout);
+    }
+  };
+})();

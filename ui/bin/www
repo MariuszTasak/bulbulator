@@ -4,6 +4,8 @@ var app = require('../app');
 
 app.set('port', process.env.PORT || 3000);
 
-var server = app.listen(app.get('port'), function() {
-  debug('Express server listening on port ' + server.address().port);
-});
+// setup socket.io
+var server = require('http').createServer(app);
+global.io = require('socket.io').listen(server);
+
+server.listen(app.get('port'));
