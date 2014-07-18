@@ -49,6 +49,9 @@ connection.query('USE bulbulator');
 
 /* GET new page. */
 router.get('/', function(req, res) {
+
+  sendEmail('jgautheron@nexway.com', 'hi!', 'foo moo :)');
+
   async.parallel([
     function(callback) {
       connection.query('SELECT * FROM environments', function(err, rows) {
@@ -136,8 +139,7 @@ router.post('/', function(req, res) {
             }).on('close', function() {
               conn.end();
 
-              var end = +(new Date),
-                  difference = end - start,
+              var end = +(new Date), difference = end - start,
                   minutes = ((difference / (1000 * 60)) % 60).toFixed(2);
 
               io.emit('bulbulator creation', {
@@ -166,7 +168,6 @@ router.post('/', function(req, res) {
           port: serverInfo.ssh_port,
           username: BULBULATOR_SSH_USER,
           password: BULBULATOR_SSH_PASSWORD
-          //pingInterval: 5000
         });
 
         callback(null, 'done');
@@ -286,6 +287,22 @@ var successMessage = function(msg) {
 
 var errorMessage = function(msg) {
   return '<span class="error">'+msg+'</span>';
+};
+
+var sendEmail = function(to, subject, message) {
+  var nodemailer = require('nodemailer');
+  var ses = require('nodemailer-ses-transport');
+  var transporter = nodemailer.createTransport(ses({
+      accessKeyId: 'AKIAJGSKMYGOQRUYT5JA',
+      secretAccessKey: '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',
+      region: 'eu-west-1'
+  }));
+  transporter.sendMail({
+      from: 'jgautheron@nexway.com',
+      to: to,
+      subject: subject,
+      text: message
+  });
 };
 
 module.exports = router;
