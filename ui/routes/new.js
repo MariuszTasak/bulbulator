@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var async = require('async');
 var crypto = require('crypto');
+var nl2br  = require('nl2br');
 
 // ssh connection
 var Connection = require('ssh2');
@@ -124,34 +125,48 @@ router.post('/', function(req, res) {
         var conn = new Connection();
         conn.on('ready', function() {
           console.log('Connection :: ready');
+          var start = +(new Date);
 
           // execute BBL
           conn.exec(bulbulatorVars+'; cd '+serverInfo.root_folder+' && '+bulbulatorCli, function(err, stream) {
             if (err) throw err;
+
             stream.on('exit', function(code, signal) {
               console.log('Stream :: exit :: code: ' + code + ', signal: ' + signal);
             }).on('close', function() {
-              console.log('Stream :: close');
               conn.end();
+
+              var end = +(new Date),
+                  difference = end - start,
+                  minutes = ((difference / (1000 * 60)) % 60).toFixed(2);
+
+              io.emit('bulbulator creation', {
+                stdout: successMessage('<br/>Deployment processed in '+minutes+' mins'),
+                hash: hash
+              });
+              console.log('Stream :: close (duration: '+minutes+' mins)');
             }).on('data', function(data) {
-              console.log('STDOUT: ' + data);
               // broadcast the BBLation infos
               io.emit('bulbulator creation', {
-                stdout: convert.toHtml(''+data),
+                stdout: convert.toHtml(nl2br(''+data)),
                 hash: hash,
                 cli: bulbulatorCli,
                 vars: bulbulatorVars
               });
             }).stderr.on('data', function(data) {
-              console.log('STDERR: ' + data);
+              // broadcast the BBLation error
+              io.emit('bulbulator creation', {
+                stdout: errorMessage(nl2br(''+data)),
+                hash: hash
+              });
             });
           });
         }).connect({
           host: serverInfo.ip,
           port: serverInfo.ssh_port,
           username: BULBULATOR_SSH_USER,
-          password: BULBULATOR_SSH_PASSWORD,
-          pingInterval: 5000
+          password: BULBULATOR_SSH_PASSWORD
+          //pingInterval: 5000
         });
 
         callback(null, 'done');
@@ -264,5 +279,13 @@ router.get('/getCommits', function(req, res) {
     }
   });
 });
+
+var successMessage = function(msg) {
+  return '<span class="success">'+msg+'</span>';
+};
+
+var errorMessage = function(msg) {
+  return '<span class="error">'+msg+'</span>';
+};
 
 module.exports = router;

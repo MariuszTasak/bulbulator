@@ -7,3 +7,24 @@ body {
 .gravatar-small {
   border-radius: 3px;
 }
+
+.stdout {
+  font-family: 'Source Sans Pro', sans-serif;
+  background: #2d2d2d;
+  color: #d3d0c8;
+  height: 700px;
+  overflow: auto;
+}
+
+.stdout ul {
+    list-style: none;
+    padding: 0;
+}
+
+.stdout .error {
+    color: #b50e0e;
+}
+
+.stdout .success {
+    color: #13ab41;
+}

@@ -13,7 +13,7 @@
 'use strict';
 
 var app = angular.module('bulbulatorApp', [
-  'ngTable', 'angularMoment', 'ui.bootstrap'
+  'ngTable', 'angularMoment', 'ui.bootstrap', 'ngSanitize'
 ])
 .constant(
   'BBL_CONSTANT', {
@@ -198,23 +198,44 @@ app.controller('NewEnvironmentCtrl', [
   };
 });
 
-// socket.io
-(function() {
+app.controller('NavbarCtrl', function($scope, $modal, $log) {
+  $scope.deployments     = {};
+  $scope.deploymentCount = 0;
+  $scope.broadcasts      = [];
+
   var socket = io();
-  var deploymentCount = {};
   socket.on('bulbulator creation', function(broadcast) {
-    console.log(broadcast);
-    deploymentCount[broadcast.hash] = '';
-    logMessage(broadcast);
+    $scope.$apply(function() {
+      $scope.deployments[broadcast.hash] = broadcast.hash;
+      $scope.deploymentCount = Object.keys($scope.deployments).length;
+      $scope.broadcasts.push(broadcast);
+    });
+
+    var $container = $('.stdout');
+    var height = $container[0].scrollHeight;
+    $container.scrollTop(height);
   });
 
-  var logMessage = function(broadcast) {
-    var $deployment = $('li#nav-deployment');
-    if ($deployment.size() === 0) {
-      $('ul.navbar-nav').append('<li id="nav-deployment" data-toggle="popover" title="Popover title" data-content="And heres some amazing content. Its very engaging. Right?"><a href="#deployments">Deployments <span class="badge">1</span></a></li>');
-    } else {
-      // append to the popover
-      //$deployment.append(msg.stdout);
-    }
+  $scope.items = ['item1', 'item2', 'item3'];
+
+  $scope.open = function (size) {
+    var modalInstance = $modal.open({
+      templateUrl: 'modalDeployments.html',
+      controller: 'ModalInstanceCtrl',
+      size: 'lg',
+      resolve: {
+        broadcasts: function () {
+          return $scope.broadcasts;
+        }
+      }
+    });
   };
-})();
+});
+
+app.controller('ModalInstanceCtrl', function($scope, $modalInstance, broadcasts) {
+  $scope.broadcasts = broadcasts;
+
+  $scope.close = function () {
+    $modalInstance.dismiss('cancel');
+  };
+});
