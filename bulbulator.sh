@@ -50,7 +50,7 @@ print_error()
 
 illegal_char_replace()
 {
-    echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
+    echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g' | tr '[:upper:]' '[:lower:]'
 }
 
 get_current_timestamp()
