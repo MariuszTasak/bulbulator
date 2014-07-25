@@ -14,7 +14,8 @@ var gravatar = require('nodejs-gravatar');
 var routes = require('./routes/index'),
     hooks = require('./routes/hooks'),
     environments = require('./routes/environments'),
-    newEnv = require('./routes/new');
+    newEnv = require('./routes/new'),
+    logEnv = require('./routes/log');
 
 require('./prototype');
 
@@ -86,6 +87,7 @@ app.use('/', routes);
 app.use('/environments', environments);
 app.use('/hooks', hooks);
 app.use('/new', newEnv);
+app.use('/log', logEnv);
 
 // GET /auth/google
 //   Use passport.authenticate() as route middleware to authenticate the

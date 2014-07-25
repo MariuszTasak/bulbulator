@@ -28,3 +28,9 @@ body {
 .stdout .success {
     color: #13ab41;
 }
+
+.stdout.big {
+  height: auto;
+  overflow: inherit;
+  padding: 20px;
+}

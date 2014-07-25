@@ -1,8 +1,24 @@
+'use strict';
+
 var express = require('express');
 var router = express.Router();
 var async = require('async');
 var crypto = require('crypto');
 var nl2br  = require('nl2br');
+var moment = require('moment');
+
+// nodemailer
+var path           = require('path'),
+    templatesDir   = path.resolve(__dirname, '..', 'views/templates'),
+    emailTemplates = require('email-templates'),
+    nodemailer     = require('nodemailer'),
+    ses            = require('nodemailer-ses-transport');
+
+var transporter = nodemailer.createTransport(ses({
+  accessKeyId: 'AKIAJGSKMYGOQRUYT5JA',
+  secretAccessKey: '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',
+  region: 'eu-west-1'
+}));
 
 // ssh connection
 var Connection = require('ssh2');
@@ -25,7 +41,6 @@ var BULBULATOR_SSH_USER       = 'bulbulator',
 var GitHubApi = require('github');
 var github = new GitHubApi({
   version: '3.0.0',
-  //debug: true,
   protocol: 'https',
   timeout: 500
 });
@@ -43,15 +58,18 @@ var connection = mysql.createConnection({
   password : BULBULATOR_MYSQL_PASSWORD
 });
 connection.connect();
-
-// connect to DB
 connection.query('USE bulbulator');
+
+// connect to redis
+var redis       = require('redis'),
+    redisClient = redis.createClient();
+
+redisClient.on('error', function(err) {
+  console.log('Error ' + err);
+});
 
 /* GET new page. */
 router.get('/', function(req, res) {
-
-  sendEmail('jgautheron@nexway.com', 'hi!', 'foo moo :)');
-
   async.parallel([
     function(callback) {
       connection.query('SELECT * FROM environments', function(err, rows) {
@@ -118,17 +136,31 @@ router.post('/', function(req, res) {
           'export MYSQL_USER="'+serverInfo.mysql_user+'"',
           'export MYSQL_PASSWORD="'+serverInfo.mysql_password+'"',
           'export MYSQL_DB_PREFIX="'+serverInfo.mysql_db_prefix+'"',
-          'export MYSQL_DB_HOST="'+serverInfo.mysql_host+'"'
-        ].join('; ');
+          'export MYSQL_DB_HOST="'+serverInfo.mysql_host+'"',
+          'export ENV_CREATOR="'+req.user.emailAddress.split('@')[0]+'"'
+        ];
+
+        // deduce URL from configuration
+        var expectedUrl = 'https://'+website+'-'+branch+'-'+serverInfo.sub_domain;
 
         // create unique hash per deployment
         var hash = crypto.createHash('md5').update(bulbulatorCli+bulbulatorVars).digest('hex');
+
+        // export the hash as well
+        bulbulatorVars.push('export ENV_HASH="'+hash+'"');
 
         // connect to the destination server
         var conn = new Connection();
         conn.on('ready', function() {
           console.log('Connection :: ready');
           var start = +(new Date);
+
+          // track the deployment status
+          // 0 = error, 1 = alright
+          var deploymentStatus = 0;
+
+          // join vars on a single line
+          bulbulatorVars = bulbulatorVars.join('; ');
 
           // execute BBL
           conn.exec(bulbulatorVars+'; cd '+serverInfo.root_folder+' && '+bulbulatorCli, function(err, stream) {
@@ -140,27 +172,47 @@ router.post('/', function(req, res) {
               conn.end();
 
               var end = +(new Date), difference = end - start,
-                  minutes = ((difference / (1000 * 60)) % 60).toFixed(2);
+                  minutes = ((difference / (1000 * 60)) % 60).toFixed(2),
+                  message;
 
-              io.emit('bulbulator creation', {
-                stdout: successMessage('<br/>Deployment processed in '+minutes+' mins'),
-                hash: hash
-              });
+              switch (deploymentStatus) {
+                case 0:
+                  message = errorMessage('<br/>Deployment failed (lasted '+minutes+' mins)');
+                  emitWsMessage.failed(hash);
+                  break;
+                case 1:
+                  message = successMessage('<br/>Deployment processed in '+minutes+' mins');
+                  // TODO: check that URL is OK
+                  emitWsMessage.created(hash);
+
+                  if (req.body['send-email']) {
+                    sendCreationNoticeEmail(
+                      hash, req.user, expectedUrl, start, end, req.body
+                    );
+                  }
+                  break;
+              }
+
+              emitWsMessage.creation(hash, message);
+
               console.log('Stream :: close (duration: '+minutes+' mins)');
             }).on('data', function(data) {
-              // broadcast the BBLation infos
-              io.emit('bulbulator creation', {
-                stdout: convert.toHtml(nl2br(''+data)),
-                hash: hash,
-                cli: bulbulatorCli,
-                vars: bulbulatorVars
-              });
+              // convert to string
+              data = ''+data;
+
+              // emit the BBLation infos
+              emitWsMessage.creation(hash, convert.toHtml(nl2br(data)));
+
+              // catch the BBL success message
+              if (data.indexOf('I\'ve done all the work for you!') !== -1) {
+                deploymentStatus = 1;
+              }
             }).stderr.on('data', function(data) {
-              // broadcast the BBLation error
-              io.emit('bulbulator creation', {
-                stdout: errorMessage(nl2br(''+data)),
-                hash: hash
-              });
+              // convert to string
+              data = ''+data;
+
+              // emit the BBLation infos
+              emitWsMessage.creation(hash, errorMessage(nl2br(data)));
             });
           });
         }).connect({
@@ -170,13 +222,11 @@ router.post('/', function(req, res) {
           password: BULBULATOR_SSH_PASSWORD
         });
 
-        callback(null, 'done');
+        callback(null, expectedUrl);
       }
-  ], function (err, result) {
-     if (result === 'done') {
-        req.flash('success', 'The environment is currently being bulbulated. Please wait 5 mins.');
-        res.redirect('/');
-     }
+  ], function (err, expectedUrl) {
+    req.flash('success', 'The environment is currently being bulbulated.');
+    res.redirect('/');
   });
 });
 
@@ -289,19 +339,66 @@ var errorMessage = function(msg) {
   return '<span class="error">'+msg+'</span>';
 };
 
-var sendEmail = function(to, subject, message) {
-  var nodemailer = require('nodemailer');
-  var ses = require('nodemailer-ses-transport');
-  var transporter = nodemailer.createTransport(ses({
-      accessKeyId: 'AKIAJGSKMYGOQRUYT5JA',
-      secretAccessKey: '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',
-      region: 'eu-west-1'
-  }));
-  transporter.sendMail({
-      from: 'jgautheron@nexway.com',
-      to: to,
-      subject: subject,
-      text: message
+var emitWsMessage = {
+  creation: function(hash, message) {
+    io.emit('bulbulator creation', {
+      hash: hash,
+      message: message
+    });
+
+    redisClient.rpush(hash, message);
+  },
+  created: function(hash) {
+    io.emit('bulbulator created', {
+      hash: hash
+    });
+  },
+  failed: function(hash) {
+    io.emit('bulbulator failed', {
+      hash: hash
+    });
+  }
+};
+
+var sendCreationNoticeEmail = function(hash, user, url, creationAskDate, creationDoneDate, config) {
+  creationAskDate  = moment(creationAskDate);
+  creationDoneDate = moment(creationDoneDate);
+
+  var creationDuration = creationDoneDate.diff(creationAskDate, 'minutes', true);
+  creationDuration += ' minutes';
+
+  emailTemplates(templatesDir, function(err, template) {
+    if (err) {
+      console.log(err);
+    } else {
+      var locals = {
+        hash: hash,
+        user: user,
+        url: url,
+        creationAskDate: creationAskDate.fromNow(),
+        creationDoneDate: creationDoneDate.fromNow(),
+        creationDuration: creationDuration,
+        config: config
+      };
+
+      // Send a single email
+      template('notice', locals, function(err, html) {
+        if (err) {
+          console.log(err);
+        } else {
+          transporter.sendMail({
+              from: 'jgautheron@nexway.com',
+              to: locals.user.emailAddress,
+              subject: 'Your '+config.website+' environment is online',
+              html: html
+          }, function(err, responseStatus) {
+            if (err) {
+              console.log(err);
+            }
+          });
+        }
+      });
+    }
   });
 };
 

@@ -6,8 +6,8 @@ html
     meta(name='viewport', content='width=device-width', initial-scale='1', maximum-scale='1', user-scalable='no')
     link(rel='stylesheet', href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
     link(rel='stylesheet', href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400')
-    link(rel='stylesheet', href='components/ng-table/ng-table.min.css')
-    link(rel='stylesheet', href='stylesheets/main.css')
+    link(rel='stylesheet', href='/components/ng-table/ng-table.min.css')
+    link(rel='stylesheet', href='/stylesheets/main.css')
 
   body(ng-app='bulbulatorApp')
     .navbar.navbar-inverse.navbar-fixed-top(role='navigation', ng-controller='NavbarCtrl')
@@ -51,7 +51,7 @@ html
           h3.modal-title Ongoing Deployments
         .modal-body.stdout
           ul
-            li(ng-repeat='broadcast in broadcasts', ng-bind-html='broadcast.stdout')
+            li(ng-repeat='broadcast in broadcasts', ng-bind-html='broadcast.message')
 
     if error_messages.length > 0 || success_messages.length > 0 || warning_messages.length > 0 || info_messages.length > 0
       .container
@@ -68,11 +68,11 @@ html
     block content
 
     script(src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js')
-    script(src='components/socket.io-client/socket.io.js')
-    script(src='components/angular/angular.min.js')
-    script(src='components/angular-bootstrap/ui-bootstrap-tpls.min.js')
-    script(src='components/moment/min/moment.min.js')
-    script(src='components/angular-moment/angular-moment.js')
-    script(src='components/angular-sanitize/angular-sanitize.min.js')
-    script(src='components/ng-table/ng-table.min.js')
-    script(src='javascripts/main.js')
+    script(src='/components/socket.io-client/socket.io.js')
+    script(src='/components/angular/angular.min.js')
+    script(src='/components/angular-bootstrap/ui-bootstrap-tpls.min.js')
+    script(src='/components/moment/min/moment.min.js')
+    script(src='/components/angular-moment/angular-moment.js')
+    script(src='/components/angular-sanitize/angular-sanitize.min.js')
+    script(src='/components/ng-table/ng-table.min.js')
+    script(src='/javascripts/main.js')

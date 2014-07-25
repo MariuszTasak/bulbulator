@@ -39,12 +39,11 @@ block content
                   .col-sm-6
                     select#environment.form-control(name='server', ng-model='server', ng-options='s.hostname for s in servers track by s.hostname', ng-disabled='!environment')
                       option(value='') -- choose server --
-
               .form-group
                 .col-sm-offset-3.col-sm-10
                   .checkbox
                     label
-                      input(type='checkbox', name='send-email')
+                      input(type='checkbox', name='send-email', checked)
                       | Send me an email once the environment will be up
               .form-group
                 .col-sm-offset-3.col-sm-10
