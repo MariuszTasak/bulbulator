@@ -28,7 +28,8 @@ chmod 770 /var/www/environments
 
 ### Create the SQL user
 ```sql
-CREATE USER 'bulbulator'@'localhost' IDENTIFIED BY 'wdZcyreHxDmyQWf8';GRANT USAGE ON *.* TO 'bulbulator'@'localhost' IDENTIFIED BY 'wdZcyreHxDmyQWf8' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;GRANT ALL PRIVILEGES ON `bulbulator\_%`.* TO 'bulbulator'@'localhost';
+CREATE USER 'bulbulator'@'localhost' IDENTIFIED BY 'wdZcyreHxDmyQWf8';GRANT USAGE ON *.* TO 'bulbulator'@'localhost' IDENTIFIED BY 'wdZcyreHxDmyQWf8' WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;
+GRANT ALL PRIVILEGES ON `bulbulator\_%`.* TO 'bulbulator'@'localhost';
 ```
 
 ### User Configuration
