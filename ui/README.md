@@ -10,6 +10,14 @@ Bulbulator UI
 
 `npm start`
 
+### Production
+For production use, use [forever][0].
+
+```bash
+npm install -g forever
+forever start bin/www
+```
+
 ## How to create a BBL-UI compatible instance
 
 ```bash
@@ -26,6 +34,7 @@ CREATE USER 'bulbulator'@'localhost' IDENTIFIED BY 'wdZcyreHxDmyQWf8';GRANT USAG
 ### User Configuration
 Issue as user "bulbulator", the following commands:
 ```bash
+echo -e "TCPKeepAlive yes\nControlMaster auto\nControlPath /tmp/%r@%h:%p\nControlPersist yes" >> ~/.ssh/config
 git config --global core.filemode false
 git config --global color.ui auto
 git config --global advice.pushNonFastForward false
@@ -33,7 +42,4 @@ git config --global advice.statusHints false
 git config --global core.whitespace trailing-space,space-before-tab
 ```
 
-echo -e "TCPKeepAlive yes\nControlMaster auto\nControlPath /tmp/%r@%h:%p\nControlPersist yes" >> ~/.ssh/config
-
-ControlPath /tmp/%r@%h:%p
-ControlPersist yes
+[0]: http://github.com/nodejitsu/forever
