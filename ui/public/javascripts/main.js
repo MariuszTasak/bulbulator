@@ -1,7 +1,7 @@
 /**
  * @ngdoc module
  * @name Bulbulator
- * @author Jonathan Gautheron <ceble@nexway.com>
+ * @author Jonathan Gautheron <jgautheron@nexway.com>
  * @description Main module for Bulbulator
  *
  * @usage
@@ -17,7 +17,11 @@ var app = angular.module('bulbulatorApp', [
 ])
 .constant(
   'BBL_CONSTANT', {
-    JIRA_BROWSER_URL: 'https://nexway.atlassian.net/browse/'
+    JIRA_BROWSER_URL: 'https://nexway.atlassian.net/browse/',
+    WWW_URL: 'http://bulbulator.nexwai.pl/',
+    WS_CREATION_EVENT: 'bulbulator creation',
+    WS_CREATED_EVENT: 'bulbulator created',
+    WS_FAILED_EVENT: 'bulbulator failed',
   }
 );
 
@@ -198,39 +202,81 @@ app.controller('NewEnvironmentCtrl', [
   };
 });
 
-app.controller('NavbarCtrl', function($scope, $modal, $log) {
-  $scope.deployments     = {};
-  $scope.deploymentCount = 0;
-  $scope.broadcasts      = [];
+app.controller('NavbarCtrl', [
+  '$scope',
+  '$modal',
+  '$log',
+  'BBL_CONSTANT',
+  function(
+    $scope, $modal, $log,
+    BBL_CONSTANT
+  ) {
+    $scope.deployments     = {};
+    $scope.deploymentCount = 0;
+    $scope.broadcasts      = [];
+    $scope.loading         = false;
 
-  var socket = io();
-  socket.on('bulbulator creation', function(broadcast) {
-    $scope.$apply(function() {
-      $scope.deployments[broadcast.hash] = broadcast.hash;
-      $scope.deploymentCount = Object.keys($scope.deployments).length;
-      $scope.broadcasts.push(broadcast);
-    });
+    var socket = io();
 
-    var $container = $('.stdout');
-    var height = $container[0].scrollHeight;
-    $container.scrollTop(height);
-  });
-
-  $scope.items = ['item1', 'item2', 'item3'];
-
-  $scope.open = function (size) {
-    var modalInstance = $modal.open({
-      templateUrl: 'modalDeployments.html',
-      controller: 'ModalInstanceCtrl',
-      size: 'lg',
-      resolve: {
-        broadcasts: function () {
-          return $scope.broadcasts;
-        }
+    // event sent for communicating status
+    socket.on(BBL_CONSTANT.WS_CREATION_EVENT, function(broadcast) {
+      // first broadcast received
+      if (0 === $scope.broadcasts.length) {
+        $scope.broadcasts.push({
+          hash: broadcast.hash,
+          message: '->> Starting deployment '+broadcast.hash.substring(0, 10)
+        });
+        $scope.loading = true;
       }
+
+      $scope.$apply(function() {
+        $scope.deployments[broadcast.hash] = broadcast.hash;
+        $scope.deploymentCount = Object.keys($scope.deployments).length;
+        $scope.broadcasts.push(broadcast);
+      });
+
+      var $container = $('.stdout'), height = $container[0].scrollHeight;
+      $container.scrollTop(height);
     });
-  };
-});
+
+    socket.on(BBL_CONSTANT.WS_CREATED_EVENT, function(broadcast) {
+      $scope.$apply(function() {
+        var logUrl = '/log/'+broadcast.hash;
+
+        $scope.loading = false;
+        $scope.broadcasts.push({
+          hash: broadcast.hash,
+          message: '->> <a href="'+logUrl+'">Click here to consult the full log</a>'
+        });
+      });
+    });
+
+    socket.on(BBL_CONSTANT.WS_FAILED_EVENT, function(broadcast) {
+      $scope.$apply(function() {
+        var logUrl = '/log/'+broadcast.hash;
+
+        $scope.loading = false;
+        $scope.broadcasts.push({
+          hash: broadcast.hash,
+          message: '->> <a href="'+logUrl+'">Click here to consult the full log</a>'
+        });
+      });
+    });
+
+    $scope.open = function (size) {
+      var modalInstance = $modal.open({
+        templateUrl: 'modalDeployments.html',
+        controller: 'ModalInstanceCtrl',
+        size: 'lg',
+        resolve: {
+          broadcasts: function () {
+            return $scope.broadcasts;
+          }
+        }
+      });
+    };
+  }
+]);
 
 app.controller('ModalInstanceCtrl', function($scope, $modalInstance, broadcasts) {
   $scope.broadcasts = broadcasts;

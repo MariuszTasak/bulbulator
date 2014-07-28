@@ -12,8 +12,7 @@ redisClient.on('error', function(err) {
 /* GET environments page. */
 router.get('/:hash', function(req, res) {
   var hash = req.params.hash;
-  console.log(hash);
-  redisClient.lrange(hash, '0', '-1', function (err, logs) {
+  redisClient.lrange(hash, '0', '-1', function(err, logs) {
     res.render('logs', { logs : logs });
   });
 });
