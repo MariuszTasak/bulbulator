@@ -5,11 +5,13 @@ export MYSQL_DB_HOST="localhost"
 
 export ENV_NAME="prep"
 
-export BASE_SETUP_DIR_TO_CHECK="/var/www/"
-export BASE_SETUP_DIR=$BASE_SETUP_DIR_TO_CHECK"testing/"
+export BASE_SETUP_DIR_TO_CHECK="/var/lib/jenkins/jobs/Bulbulator/www"
+export BASE_SETUP_DIR="/var/lib/jenkins/jobs/Bulbulator/www/build-bbl/"
 export MEDIA_DIR="/home/root/mediasync_v2"
 export REPOSITORY_URL="git@github.com:NexwayGroup/Nexway-3.0"
-export SUB_DOMAIN=".build-bbl.nexwai.pl"
+export SUB_DOMAIN="a.build-bbl.nexwai.pl"
 
 export WEBSITE="webstore"
 export BRANCH="develop"
+
+export IS_AUTOMATED=true
