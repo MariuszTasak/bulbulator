@@ -83,7 +83,7 @@ drop_environment()
 
     echo ""
     
-    if [ -n "$IS_JENKINS" ]; then
+    if [ -n "$IS_AUTOMATED" ]; then
         print_msg "Dropping the instance..."
         notify_deletion
         drop_database_and_remove_files
