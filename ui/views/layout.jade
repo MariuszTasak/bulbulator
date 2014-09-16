@@ -1,7 +1,8 @@
 doctype html
 html
   head
-    title= title
+    title
+      | Bulbulator
     meta(charset='utf-8')
     meta(name='viewport', content='width=device-width', initial-scale='1', maximum-scale='1', user-scalable='no')
     link(rel='stylesheet', href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
@@ -34,7 +35,9 @@ html
                   img.gravatar-small(src=user.gravatarLink, width='20', style='margin-left: 10px;')
             else
               .navbar-form.navbar-right
-                 a.btn.btn-success(href='/auth/google', role='button') Sign in
+                #signinButton
+                  span.g-signin(data-scope='https://www.googleapis.com/auth/plus.login', data-clientid='91361093476-035q8080kdb6ab42jep7n0kjqq7esror.apps.googleusercontent.com', data-redirecturi='postmessage', data-accesstype='offline', data-cookiepolicy='single_host_origin', data-callback='signInCallback')
+                  #result
 
     if error_messages.length > 0 || success_messages.length > 0 || warning_messages.length > 0 || info_messages.length > 0
       .container

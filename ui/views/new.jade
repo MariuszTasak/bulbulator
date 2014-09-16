@@ -37,7 +37,7 @@ block content
               .form-group
                   label.col-sm-3.control-label(for='environment') Server
                   .col-sm-6
-                    select#environment.form-control(ng-model='server', ng-options='s.hostname for s in servers track by s.hostname', ng-disabled='!environment')
+                    select#environment.form-control(name='server', ng-model='server', ng-options='s.hostname for s in servers track by s.hostname', ng-disabled='!environment')
                       option(value='') -- choose server --
 
               .form-group

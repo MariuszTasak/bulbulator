@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var async = require('async');
+var Connection = require('ssh2');
 
 // connect to github
 var repo = 'Nexway-3.0';
