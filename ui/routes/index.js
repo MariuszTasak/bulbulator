@@ -1,16 +1,17 @@
 var express = require('express');
 var router = express.Router();
 
+// config
+var config = require('../config');
+
 var mysql      = require('mysql');
 var connection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'bulbulator',
-  password : 'wXmMVGCFxaZudT5B'
+  host     : config.BULBULATOR_MYSQL_HOST,
+  user     : config.BULBULATOR_MYSQL_USER,
+  password : config.BULBULATOR_MYSQL_PASSWORD
 });
 connection.connect();
-
-// connect to DB
-connection.query('USE bulbulator');
+connection.query('USE '+config.BULBULATOR_MYSQL_DB);
 
 /* GET home page. */
 router.get('/', function(req, res) {

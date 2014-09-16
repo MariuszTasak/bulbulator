@@ -1,0 +1,111 @@
+doctype transitional
+html(xmlns='http://www.w3.org/1999/xhtml')
+  head
+    // If you delete this tag, the sky will fall on your head
+    meta(name='viewport', content='width=device-width')
+    meta(http-equiv='Content-Type', content='text/html; charset=UTF-8')
+    title ZURBemails
+    link(rel='stylesheet', type='text/css', href='stylesheets/email.css')
+  body(bgcolor='#FFFFFF')
+    // HEADER
+    table.head-wrap(bgcolor='#999999')
+      tr
+        td
+        td.header.container
+          div.content
+            table(bgcolor='#272727')
+              tr
+                td
+                  img(src='https://s3-eu-west-1.amazonaws.com/nexwaymediaeu/nexway.png')
+        td
+    // /HEADER
+    // BODY
+    table.body-wrap
+      tr
+        td
+        td.container(bgcolor='#FFFFFF')
+          div.content
+            table
+              tr
+                td
+                  h3 Hi, #{user.displayName}
+                  p.lead
+                    | The #[b #{config.website}] environment you asked for deployment #[b #{creationAskDate}] is now online. It took #[b #{creationDuration}] to deploy.
+
+                  table.infos(width='100%')
+                    // column 1
+                    table.label(align='left')
+                      tr
+                        td
+                          b Repository
+                      tr
+                        td
+                          b Website
+                      tr
+                        td
+                          b Branch
+                      tr
+                        td
+                          b Commit
+                      tr
+                        td
+                          b Environment
+                      tr
+                        td
+                          b Server
+                    // column 2
+                    table.value(align='left')
+                      tr
+                        td #{config.repository}
+                      tr
+                        td #{config.website}
+                      tr
+                        td #{config.branch}
+                      tr
+                        td #{config.commit}
+                      tr
+                        td #{config.environment}
+                      tr
+                        td #{config.server}
+
+                  br
+
+                  // social & contact
+                  table.social(width='100%')
+                    tr
+                      td
+                        // column 1
+                        table.column(align='left')
+                          tr
+                            td
+                              h5 Actions
+                              p
+                                a.soc-btn.fb(href='#{url}') Access the Front
+                                a.soc-btn.tw(href='#{url}/admin/admin/') Access the BO
+                        // /column 1
+                        // column 2
+                        table.column(align='left')
+                          tr
+                            td
+                              h5 &nbsp;
+                              p
+                                a.soc-btn.gp(href='http://bulbulator.nexwai.pl/log/#{hash}') See deployment log
+                                a.soc-btn.gp(href='#') Drop the environment
+                        // /column 2
+                        span.clear
+                  // /social & contact
+          // /content
+        td
+    // /BODY
+
+    script(type='application/ld+json').
+      {
+      "@context": "http://schema.org",
+      "@type": "EmailMessage",
+      "description": "Successful deployment notice",
+        "action": {
+        "@type": "ViewAction",
+        "url": "http://bulbulator.nexwai.pl/log/#{hash}",
+        "name": "View Log"
+        }
+      }

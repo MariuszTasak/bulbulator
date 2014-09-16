@@ -82,13 +82,20 @@ drop_environment()
     print_files_to_remove
 
     echo ""
-
-    confirm "Would you really like to drop this instance? [y/N]"
-
-    if [ $? -eq 0 ]; then
+    
+    if [ -n "$IS_AUTOMATED" ]; then
+        print_msg "Dropping the instance..."
         notify_deletion
         drop_database_and_remove_files
     else
-        print_msg "Command aborted by user."
+	    confirm "Would you really like to drop this instance? [y/N]"
+	
+	    if [ $? -eq 0 ]; then
+	        notify_deletion
+	        drop_database_and_remove_files
+	    else
+	        print_msg "Command aborted by user."
+	        exit 1
+	    fi
     fi
 }

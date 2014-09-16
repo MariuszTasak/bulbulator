@@ -14,7 +14,8 @@ var gravatar = require('nodejs-gravatar');
 var routes = require('./routes/index'),
     hooks = require('./routes/hooks'),
     environments = require('./routes/environments'),
-    newEnv = require('./routes/new');
+    newEnv = require('./routes/new'),
+    logEnv = require('./routes/log');
 
 require('./prototype');
 
@@ -23,7 +24,8 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(obj, done) {
-  obj.gravatarLink = gravatar.imageUrl(obj.emails[0].value, { size: 20 });
+  obj.emailAddress = obj.emails[0].value;
+  obj.gravatarLink = gravatar.imageUrl(obj.emailAddress, { size: 20 });
   done(null, obj);
 });
 
@@ -67,12 +69,13 @@ app.use(function(req, res, next) {
   next();
 });
 
-//app.all('/new*', ensureAuthenticated);
+app.all('/new*', ensureAuthenticated);
 
 app.use('/', routes);
 app.use('/environments', environments);
 app.use('/hooks', hooks);
 app.use('/new', newEnv);
+app.use('/log', logEnv);
 
 app.get('/auth/google/callback', passport.authenticate('google'), function(req, res) {
   // Return user back to client
@@ -85,10 +88,6 @@ app.get('/logout', function(req, res){
 });
 
 // Simple route middleware to ensure user is authenticated.
-//   Use this route middleware on any resource that needs to be protected.  If
-//   the request is authenticated (typically via a persistent login session),
-//   the request will proceed.  Otherwise, the user will be redirected to the
-//   login page.
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
   req.flash('error', 'You have to be logged in to access this page.');

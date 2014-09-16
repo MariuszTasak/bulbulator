@@ -6,11 +6,12 @@ html
     meta(charset='utf-8')
     meta(name='viewport', content='width=device-width', initial-scale='1', maximum-scale='1', user-scalable='no')
     link(rel='stylesheet', href='//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css')
-    link(rel='stylesheet', href='components/ng-table/ng-table.min.css')
-    link(rel='stylesheet', href='stylesheets/main.css')
+    link(rel='stylesheet', href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400')
+    link(rel='stylesheet', href='/components/ng-table/ng-table.min.css')
+    link(rel='stylesheet', href='/stylesheets/main.css')
 
   body(ng-app='bulbulatorApp')
-    .navbar.navbar-inverse.navbar-fixed-top(role='navigation')
+    .navbar.navbar-inverse.navbar-fixed-top(role='navigation', ng-controller='NavbarCtrl')
       .container
           .navbar-header
             button.navbar-toggle(type='button', data-toggle='collapse', data-target='.navbar-collapse')
@@ -25,6 +26,11 @@ html
                 a(href='/environments') List
               li
                 a(href='/new') New
+              li#nav-deployment(ng-show='deploymentCount')
+                a(href='#deployments', ng-click="open()")
+                  | Deployments&nbsp;
+                  span.badge {{deploymentCount}}
+
             if user
               .navbar-right
                 p.navbar-text
@@ -38,6 +44,17 @@ html
                 #signinButton
                   span.g-signin(data-scope='https://www.googleapis.com/auth/plus.login', data-clientid='91361093476-035q8080kdb6ab42jep7n0kjqq7esror.apps.googleusercontent.com', data-redirecturi='postmessage', data-accesstype='offline', data-cookiepolicy='single_host_origin', data-callback='signInCallback')
                   #result
+
+      script(type='text/ng-template', id='modalDeployments.html')
+        .modal-header
+          button.close(type='button', ng-click='close()')
+            span(aria-hidden='true') ×
+            span.sr-only Close
+
+          h3.modal-title Ongoing Deployments
+        .modal-body.stdout
+          ul
+            li(ng-repeat='broadcast in broadcasts', ng-bind-html='broadcast.message')
 
     if error_messages.length > 0 || success_messages.length > 0 || warning_messages.length > 0 || info_messages.length > 0
       .container
@@ -54,9 +71,11 @@ html
     block content
 
     script(src='//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js')
-    script(src='components/angular/angular.min.js')
-    script(src='components/angular-bootstrap/ui-bootstrap-tpls.min.js')
-    script(src='components/moment/min/moment.min.js')
-    script(src='components/angular-moment/angular-moment.js')
-    script(src='components/ng-table/ng-table.min.js')
-    script(src='javascripts/main.js')
+    script(src='/components/socket.io-client/socket.io.js')
+    script(src='/components/angular/angular.min.js')
+    script(src='/components/angular-bootstrap/ui-bootstrap-tpls.min.js')
+    script(src='/components/moment/min/moment.min.js')
+    script(src='/components/angular-moment/angular-moment.js')
+    script(src='/components/angular-sanitize/angular-sanitize.min.js')
+    script(src='/components/ng-table/ng-table.min.js')
+    script(src='/javascripts/main.js')

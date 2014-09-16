@@ -50,7 +50,7 @@ print_error()
 
 illegal_char_replace()
 {
-    echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g'
+    echo $1 | sed 's/[^a-z^0-9^A-Z]/'$2'/g' | tr '[:upper:]' '[:lower:]'
 }
 
 get_current_timestamp()
@@ -190,6 +190,9 @@ if [ -z "$HOOK_CREATION_URL" ]; then
 fi
 if [ -z "$HOOK_DELETION_URL" ]; then
     export HOOK_DELETION_URL="https://bulbulator.nexwai.pl/hooks/deletion"
+fi
+if [ -z "$IS_AUTOMATED" ]; then
+    export IS_AUTOMATED=false
 fi
 
 export SETUP_BRANCH_BASE_DIR="$BASE_SETUP_DIR`illegal_char_replace $BRANCH '-'`"

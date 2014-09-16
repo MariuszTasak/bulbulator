@@ -1,0 +1,7 @@
+extends layout
+
+block content
+  .stdout.big
+    ul
+      each log in logs
+        li!= log
