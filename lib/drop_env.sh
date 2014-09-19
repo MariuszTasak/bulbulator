@@ -19,20 +19,21 @@ drop_db()
 
 drop_database_and_remove_files()
 {
-
     if [ -h "$SETUP_DIR_LINK" ]; then
-    	print_msg "Step: Dropping database and removing directories"
+        print_msg "Step: Dropping database and removing directories"
         # drop database remove symbolic link  remove all directories
-        drop_db & rm $SETUP_DIR_LINK & rm -rf $SETUP_DIR_LINK*
+        drop_db
+        rm $SETUP_DIR_LINK
+        rm -rf $SETUP_DIR_LINK*
 
         # remove branch dir if empty
         if [ ! "$(ls -A $SETUP_BRANCH_BASE_DIR)" ]; then
             print_msg "Removing empty branch dir: $SETUP_BRANCH_BASE_DIR"
             rmdir $SETUP_BRANCH_BASE_DIR
         fi
-	else
-    	print_msg "Step: Dropping database" 
-		drop_db
+    else
+        print_msg "Step: Dropping database" 
+        drop_db
     fi
 
     print_msg "-->> Bulbulator: I've done all the work for you!"

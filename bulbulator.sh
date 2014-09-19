@@ -10,7 +10,7 @@ Usage:
 
    2.1 Either from file
    . etc/bulbulator.config.sh && bash bulbulator.sh -r REPOSITORY_URL -b BRANCH -e ENV \\
-        -w WEBSITE [-s SUBDOMAIN] [--with-db-drop] [--domain-separator \"-\"]
+        -w WEBSITE [-s SUBDOMAIN] [--with-db-drop] [--domain-separator \"-\"] [--db-dump-file filepath]
 
    2.2 or via command line
    MYSQL_USER=dev MYSQL_PASSWORD=secret (...and so on ;) ./bulbulator.sh -r Nexway-3.0/ \\
@@ -139,6 +139,11 @@ while test $# -gt 0; do
             shift
             export DROP_ENV=true
             ;;
+        --db-dump-file)
+            shift
+            export DB_DUMP_FILE=$1
+            shift
+            ;;
         *)
             break
             ;;
@@ -155,6 +160,11 @@ done
 #echo $SUB_DOMAIN
 #echo $DROP_DB
 #exit
+
+if [ ! -z "$DB_DUMP_FILE" ] && [ ! -f $DB_DUMP_FILE ]; then
+    print_error "Database dump file does not exist $DB_DUMP_FILE"
+    exit 1;
+fi
 
 if [ -z "$SUB_DOMAIN" ]; then
     export SUB_DOMAIN="testing.nexwai.pl"
